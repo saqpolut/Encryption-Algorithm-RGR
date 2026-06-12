@@ -14,16 +14,9 @@
 #include <exception>
 #include <limits>
 #include <fstream>
-#include <string>
-
-enum MainMenuAction {
-    ACTION_EXIT = 0,
-    ACTION_VIGENERE_SKITALA = 1,
-    ACTION_RSA_ENIGMA = 2,
-    ACTION_XOR_TEA = 3,
-    ACTION_GRONSFELD = 4,
-    ACTION_GRANDCHIFFRE = 5
-};
+#include <algorithm>
+#include <random>
+#include <ctime>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -32,13 +25,13 @@ enum MainMenuAction {
 using namespace std;
 using namespace Crypto;
 
+// ========== Вспомогательные функции ==========
 void clearInput() {
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-
-// ========== Вспомогательные функции для плагинов Виженер/Скитала ==========
+// ========== Подсистема 1: Виженер + Скитала ==========
 void handleTextMode(int pluginIdx, bool isEncrypt) {
     LoadedPlugin* plugin = getPlugin(pluginIdx);
     if (!plugin) {
@@ -63,7 +56,7 @@ void handleTextMode(int pluginIdx, bool isEncrypt) {
     cout << "Введите текст: ";
     cin.getline(input, sizeof(input));
 
-    char output[8192]; // достаточный буфер для результата
+    char output[8192];
     if (isEncrypt)
         plugin->encrypt_text(input, output, key);
     else
@@ -131,7 +124,6 @@ void handleFileMode(int pluginIdx, bool isEncrypt) {
     cout << "Операция завершена. Результат: " << outPath << endl;
 }
 
-// ========== Подсистема 1: Виженер + Скитала ==========
 void runVigenereSkitala() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: ВИЖЕНЕР + СКИТАЛА\n";
@@ -198,74 +190,199 @@ void runRSAEnigma() {
     run_application();
 }
 
-// ========== Подсистема 3: XOR + TEA ==========
+// ========== Подсистема 3: XOR + TEA (расширенная) ==========
+// Вспомогательные функции для работы с байтами и uint32_t
+vector<uint32_t> bytesToUint32(const vector<uint8_t>& bytes, size_t blockSize) {
+    vector<uint32_t> result;
+    size_t numBlocks = (bytes.size() + blockSize - 1) / blockSize;
+    result.reserve(numBlocks * (blockSize / 4));
+    
+    for (size_t i = 0; i < bytes.size(); i += blockSize) {
+        uint32_t chunk[2] = {0, 0};
+        for (size_t j = 0; j < blockSize && i + j < bytes.size(); ++j) {
+            int bytePos = j % 4;
+            int wordIdx = j / 4;
+            chunk[wordIdx] |= (static_cast<uint32_t>(bytes[i + j]) << (bytePos * 8));
+        }
+        result.push_back(chunk[0]);
+        if (blockSize == 8) result.push_back(chunk[1]);
+    }
+    return result;
+}
+
+vector<uint8_t> uint32ToBytes(const vector<uint32_t>& data, size_t originalSize) {
+    vector<uint8_t> result;
+    result.reserve(originalSize);
+    for (size_t i = 0; i < data.size(); ++i) {
+        uint32_t val = data[i];
+        for (int j = 0; j < 4; ++j) {
+            result.push_back(static_cast<uint8_t>((val >> (j * 8)) & 0xFF));
+        }
+    }
+    if (result.size() > originalSize) result.resize(originalSize);
+    return result;
+}
+
+string processTextXorTea(const string& input, const string& key, bool encrypt) {
+    vector<uint8_t> inBytes(input.begin(), input.end());
+    string algo = get_plugin_name();
+    size_t blockSize = (algo == "TEA") ? 8 : 4;
+    
+    vector<uint32_t> inUint32 = bytesToUint32(inBytes, blockSize);
+    vector<uint32_t> outUint32(inUint32.size());
+    
+    process_data(inUint32.data(), inUint32.size(), key.c_str(), outUint32.data());
+    vector<uint8_t> outBytes = uint32ToBytes(outUint32, inBytes.size());
+    return string(outBytes.begin(), outBytes.end());
+}
+
+bool processFileXorTea(const string& inPath, const string& outPath, const string& key, bool encrypt) {
+    ifstream inFile(inPath, ios::binary);
+    if (!inFile) {
+        cerr << "Ошибка: не удалось открыть входной файл " << inPath << endl;
+        return false;
+    }
+    vector<uint8_t> inBytes((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
+    inFile.close();
+    if (inBytes.empty()) {
+        cerr << "Входной файл пуст" << endl;
+        return false;
+    }
+    string algo = get_plugin_name();
+    size_t blockSize = (algo == "TEA") ? 8 : 4;
+    vector<uint32_t> inUint32 = bytesToUint32(inBytes, blockSize);
+    vector<uint32_t> outUint32(inUint32.size());
+    process_data(inUint32.data(), inUint32.size(), key.c_str(), outUint32.data());
+    vector<uint8_t> outBytes = uint32ToBytes(outUint32, inBytes.size());
+    ofstream outFile(outPath, ios::binary);
+    if (!outFile) {
+        cerr << "Ошибка: не удалось создать выходной файл " << outPath << endl;
+        return false;
+    }
+    outFile.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
+    return true;
+}
+
 void runXorTea() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: XOR + TEA\n";
     cout << "========================================\n";
-
+    
     bool exitSub = false;
-    int ch;
+    int ch, subCh;
     char algo[10];
     char key[256];
     size_t len;
     vector<unsigned int> input, output;
-
+    string text, processedText;
+    string inPath, outPath;
+    
     while (!exitSub) {
-        cout << "\n1. Выбрать алгоритм" << endl;
-        cout << "2. Показать текущий" << endl;
-        cout << "3. Сгенерировать ключ" << endl;
-        cout << "4. Обработать данные" << endl;
-        cout << "0. Назад" << endl;
+        cout << "\n--- МЕНЮ XOR/TEA ---\n";
+        cout << "1. Выбрать алгоритм (XOR/TEA)\n";
+        cout << "2. Показать текущий алгоритм\n";
+        cout << "3. Сгенерировать ключ\n";
+        cout << "4. Шифрование/дешифрование ТЕКСТА\n";
+        cout << "5. Шифрование/дешифрование ФАЙЛА\n";
+        cout << "6. Обработка массива чисел (старый режим)\n";
+        cout << "0. Назад\n";
         cout << "Выбор: ";
-
+        
         cin >> ch;
         clearInput();
-
+        
         if (ch == 0) break;
-
-        if (ch == 1) {
-            cout << "XOR или TEA: ";
-            cin.getline(algo, 10);
-            load_plugin(algo);
-            cout << "Выбран: " << get_plugin_name() << endl;
-        }
-        else if (ch == 2) {
-            cout << "Текущий алгоритм: " << get_plugin_name() << endl;
-        }
-        else if (ch == 3) {
-            generate_key(key, sizeof(key));
-            cout << "Сгенерированный ключ: " << key << endl;
-        }
-        else if (ch == 4) {
-            cout << "Длина массива: ";
-            cin >> len;
-            clearInput();
-
-            input.resize(len);
-            output.resize(len);
-
-            cout << "Введите " << len << " чисел: ";
-            for (size_t i = 0; i < len; ++i) {
-                cin >> input[i];
+        
+        switch (ch) {
+            case 1:
+                cout << "Введите алгоритм (XOR или TEA): ";
+                cin.getline(algo, 10);
+                load_plugin(algo);
+                cout << "Текущий алгоритм: " << get_plugin_name() << endl;
+                break;
+            case 2:
+                cout << "Текущий алгоритм: " << get_plugin_name() << endl;
+                break;
+            case 3:
+                generate_key(key, sizeof(key));
+                cout << "Сгенерированный ключ: " << key << endl;
+                break;
+            case 4: {
+                cout << "\n1. Шифрование текста\n2. Дешифрование текста\nВыбор: ";
+                cin >> subCh;
+                clearInput();
+                if (subCh != 1 && subCh != 2) {
+                    cout << "Неверный выбор.\n";
+                    break;
+                }
+                bool encrypt = (subCh == 1);
+                cout << "Введите текст: ";
+                getline(cin, text);
+                cout << "Введите ключ: ";
+                cin.getline(key, sizeof(key));
+                try {
+                    processedText = processTextXorTea(text, key, encrypt);
+                    cout << "\nРезультат (" << (encrypt ? "зашифровано" : "расшифровано") << "):\n";
+                    cout << "HEX: ";
+                    for (unsigned char c : processedText) {
+                        printf("%02X ", c);
+                    }
+                    cout << "\nТекст: " << processedText << endl;
+                } catch (const exception& e) {
+                    cerr << "Ошибка: " << e.what() << endl;
+                }
+                break;
             }
-            clearInput();
-
-            cout << "Введите ключ: ";
-            cin.getline(key, sizeof(key));
-
-            process_data(input.data(), len, key, output.data());
-
-            cout << "Результат: ";
-            for (size_t i = 0; i < len; ++i) {
-                cout << output[i] << " ";
+            case 5: {
+                cout << "\n1. Шифрование файла\n2. Дешифрование файла\nВыбор: ";
+                cin >> subCh;
+                clearInput();
+                if (subCh != 1 && subCh != 2) {
+                    cout << "Неверный выбор.\n";
+                    break;
+                }
+                bool encrypt = (subCh == 1);
+                cout << "Входной файл: ";
+                getline(cin, inPath);
+                cout << "Выходной файл: ";
+                getline(cin, outPath);
+                cout << "Введите ключ: ";
+                cin.getline(key, sizeof(key));
+                if (processFileXorTea(inPath, outPath, key, encrypt)) {
+                    cout << "Операция выполнена успешно. Результат: " << outPath << endl;
+                } else {
+                    cout << "Ошибка при обработке файла.\n";
+                }
+                break;
             }
-            cout << endl;
+            case 6: {
+                cout << "Длина массива: ";
+                cin >> len;
+                clearInput();
+                input.resize(len);
+                output.resize(len);
+                cout << "Введите " << len << " чисел: ";
+                for (size_t i = 0; i < len; ++i) {
+                    cin >> input[i];
+                }
+                clearInput();
+                cout << "Введите ключ: ";
+                cin.getline(key, sizeof(key));
+                process_data(input.data(), len, key, output.data());
+                cout << "Результат: ";
+                for (size_t i = 0; i < len; ++i) {
+                    cout << output[i] << " ";
+                }
+                cout << endl;
+                break;
+            }
+            default:
+                cout << "Неверный выбор.\n";
         }
     }
 }
 
-// ========== Подсистема 4: Gronsfeld (с поддержкой файлов) ==========
+// ========== Подсистема 4: Gronsfeld ==========
 void runGronsfeld() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: GRONSFELD\n";
@@ -273,7 +390,6 @@ void runGronsfeld() {
 
     CryptoLibraryLoader loader;
     string libPath;
-
 #ifdef _WIN32
     libPath = "gronsfeld_plugin.dll";
 #else
@@ -294,19 +410,11 @@ void runGronsfeld() {
     char* outputText = nullptr;
     int keyLen;
 
-    // Переменные для работы с файлами
-    string inFilePath, outFilePath;
-    string fileContent;
-    ifstream inFile;
-    ofstream outFile;
-
     while (!exitSub) {
         cout << "\n1. Сгенерировать ключ" << endl;
         cout << "2. Зашифровать текст" << endl;
         cout << "3. Расшифровать текст" << endl;
         cout << "4. Проверить ключ" << endl;
-        cout << "5. Зашифровать файл" << endl;
-        cout << "6. Расшифровать файл" << endl;
         cout << "0. Назад" << endl;
         cout << "Выбор: ";
 
@@ -328,15 +436,12 @@ void runGronsfeld() {
         else if (ch == 2 || ch == 3) {
             cout << "Введите текст: ";
             cin.getline(inputText, sizeof(inputText));
-
             cout << "Введите ключ (цифры): ";
             cin.getline(key, sizeof(key));
-
             if (!loader.validateKey(key)) {
                 cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
                 continue;
             }
-
             int res;
             if (ch == 2) {
                 res = loader.encrypt(inputText, (int)strlen(inputText), key, &outputText);
@@ -345,7 +450,6 @@ void runGronsfeld() {
                 res = loader.decrypt(inputText, (int)strlen(inputText), key, &outputText);
                 cout << "Расшифрованный текст: ";
             }
-
             if (res > 0 && outputText) {
                 cout << outputText << endl;
                 loader.freeMemory(outputText);
@@ -359,68 +463,17 @@ void runGronsfeld() {
             cin.getline(key, sizeof(key));
             cout << (loader.validateKey(key) ? "Ключ корректен" : "Ключ НЕ корректен") << endl;
         }
-        else if (ch == 5 || ch == 6) {
-            // Шифрование или дешифрование файла
-            cout << "Введите путь к входному файлу: ";
-            getline(cin, inFilePath);
-            cout << "Введите путь к выходному файлу: ";
-            getline(cin, outFilePath);
-            cout << "Введите ключ (цифры): ";
-            cin.getline(key, sizeof(key));
-
-            if (!loader.validateKey(key)) {
-                cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
-                continue;
-            }
-
-            // Чтение входного файла
-            inFile.open(inFilePath, ios::binary);
-            if (!inFile) {
-                cout << "Ошибка: не удалось открыть файл " << inFilePath << endl;
-                continue;
-            }
-            fileContent.assign((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
-            inFile.close();
-
-            // Обработка содержимого
-            int res;
-            if (ch == 5) {
-                res = loader.encrypt(fileContent.c_str(), (int)fileContent.size(), key, &outputText);
-                cout << "Шифрование файла выполнено. ";
-            } else {
-                res = loader.decrypt(fileContent.c_str(), (int)fileContent.size(), key, &outputText);
-                cout << "Дешифрование файла выполнено. ";
-            }
-
-            if (res > 0 && outputText) {
-                // Запись результата в выходной файл
-                outFile.open(outFilePath, ios::binary);
-                if (!outFile) {
-                    cout << "Ошибка: не удалось создать файл " << outFilePath << endl;
-                } else {
-                    outFile.write(outputText, res);
-                    outFile.close();
-                    cout << "Результат сохранён в " << outFilePath << endl;
-                }
-                loader.freeMemory(outputText);
-                outputText = nullptr;
-            } else {
-                cout << "Ошибка обработки файла." << endl;
-            }
-        }
     }
-
     loader.unload();
 }
 
 // ========== Подсистема 5: GrandChiffre ==========
 void runGrandChiffre() {
     cout << "\n========================================\n";
-    cout << "    ПОДСИСТЕМА: GRAND CHIFFRE\n";
+    cout << "    ПОДСИСТЕМА: GRANDCHIFFRE\n";
     cout << "========================================\n";
 
     string libPath;
-
 #ifdef _WIN32
     libPath = "grandchiffre_plugin.dll";
 #else
@@ -493,10 +546,7 @@ void runGrandChiffre() {
 
             keyBytes.clear();
             for (i = 0; i < hexKey.length(); ) {
-                if (hexKey[i] == ' ') {
-                    ++i;
-                    continue;
-                }
+                if (hexKey[i] == ' ') { ++i; continue; }
                 if (i + 1 >= hexKey.length()) break;
                 hex[0] = hexKey[i];
                 hex[1] = hexKey[i+1];
@@ -525,19 +575,14 @@ void runGrandChiffre() {
 
             cout << "Входной файл: ";
             getline(cin, inPath);
-
             cout << "Выходной файл: ";
             getline(cin, outPath);
-
             cout << "Введите ключ в HEX: ";
             getline(cin, hexKey);
 
             keyBytes.clear();
             for (i = 0; i < hexKey.length(); ) {
-                if (hexKey[i] == ' ') {
-                    ++i;
-                    continue;
-                }
+                if (hexKey[i] == ' ') { ++i; continue; }
                 if (i + 1 >= hexKey.length()) break;
                 hex[0] = hexKey[i];
                 hex[1] = hexKey[i+1];
@@ -551,7 +596,6 @@ void runGrandChiffre() {
                 cout << "Ошибка: не удалось открыть файл " << inPath << endl;
                 continue;
             }
-
             outFile = fopen(outPath.c_str(), "wb");
             if (!outFile) {
                 cout << "Ошибка: не удалось создать файл " << outPath << endl;
@@ -560,24 +604,29 @@ void runGrandChiffre() {
             }
 
             fileBuffer.resize(65536);
-
             while ((bytesRead = fread(fileBuffer.data(), 1, 65536, inFile)) > 0) {
                 vector<unsigned char> chunk(fileBuffer.begin(), fileBuffer.begin() + bytesRead);
                 alg->process(keyBytes, chunk);
                 fwrite(chunk.data(), 1, chunk.size(), outFile);
             }
-
             fclose(inFile);
             fclose(outFile);
-
             cout << "Операция выполнена успешно. Результат: " << outPath << endl;
         }
     }
-
     unload_plugin();
 }
 
-// ========== Главное меню ==========
+// ========== ГЛАВНОЕ МЕНЮ ==========
+enum MainMenuAction {
+    MENU_EXIT = 0,
+    MENU_VIGENERE_SKITALA = 1,
+    MENU_RSA_ENIGMA = 2,
+    MENU_XOR_TEA = 3,
+    MENU_GRONSFELD = 4,
+    MENU_GRANDCHIFFRE = 5
+};
+
 int main() {
 #ifdef _WIN32
     SetConsoleOutputCP(65001);
@@ -609,15 +658,18 @@ int main() {
         clearInput();
 
         switch (choice) {
-    case ACTION_VIGENERE_SKITALA: runVigenereSkitala(); break;
-    case ACTION_RSA_ENIGMA:       runRSAEnigma();       break;
-    case ACTION_XOR_TEA:          runXorTea();          break;
-    case ACTION_GRONSFELD:        runGronsfeld();       break;
-    case ACTION_GRANDCHIFFRE:     runGrandChiffre();    break;
-    case ACTION_EXIT:             running = false;      break;
-    default: cout << "Неверный выбор!" << endl;
-}
+            case MENU_VIGENERE_SKITALA: runVigenereSkitala(); break;
+            case MENU_RSA_ENIGMA:       runRSAEnigma();       break;
+            case MENU_XOR_TEA:          runXorTea();          break;
+            case MENU_GRONSFELD:        runGronsfeld();       break;
+            case MENU_GRANDCHIFFRE:     runGrandChiffre();    break;
+            case MENU_EXIT:
+                running = false;
+                cout << "\nДо свидания!" << endl;
+                break;
+            default:
+                cout << "Неверный выбор!" << endl;
+        }
     }
-
     return 0;
 }
