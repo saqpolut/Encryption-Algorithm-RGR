@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ctype.h>
 
 void clearInputBuffer() {
     	int c;
@@ -11,18 +10,23 @@ void clearInputBuffer() {
 
 void removeNewline(char* str) {
     	if (!str) return;
-    	size_t len = strlen(str);
+    	int len = 0;
+    	while (str[len] != '\0') {
+        	len++;
+    	}
     	if (len > 0 && str[len-1] == '\n') {
         	str[len-1] = '\0';
     	}
 }
 
 int isEmpty(const char* str) {
-    	return str == NULL || str[0] == '\0';
+    	if (str == 0) return 1;
+    	if (str[0] == '\0') return 1;
+    	return 0;
 }
 
 void printSeparator() {
-    	printf("\n========================================\n");
+    printf("\n========================================\n");
 }
 
 void waitForEnter() {
@@ -33,26 +37,32 @@ void waitForEnter() {
 
 int strLength(const char* str) {
     	int len = 0;
-    	while (str[len]) len++;
+    	while (str[len] != '\0') {
+        	len++;
+    	}
     	return len;
 }
 
 void generateRandomKey(char* key, int maxLen) {
     	static int seeded = 0;
-    	if (!seeded) {
-        	srand((unsigned int)time(NULL));
+    	if (seeded == 0) {
+        	srand(time(0));
         	seeded = 1;
     	}
     
-    	int length = 8 + (rand() % 16); // ключ от 8 до 24 символов
+    	int length = 8;
+    	int r = rand() % 16;
+    	length = length + r;
     
     	if (length > maxLen - 1) {
         	length = maxLen - 1;
     	}
     
-    	for (int i = 0; i < length; i++) {
-        	// Генерируем печатные символы от 33 до 126
-        	key[i] = (char)(33 + (rand() % 94));
+    	int i = 0;
+    	while (i < length) {
+        	int r = rand() % 94;
+        	key[i] = 33 + r;
+        	i = i + 1;
     	}
     	key[length] = '\0';
 }
