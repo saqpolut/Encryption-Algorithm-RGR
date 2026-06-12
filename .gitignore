@@ -1,16 +1,3 @@
-
-*.o
-*.so
-encrypt
-*.txt
-*.bin
-dec.txt
-dec1.txt
-enc.bin
-test.txt
-.vscode/
-.idea/
-*.swp
 dec.txt
 dec1.txt
 dec.bin
@@ -23,4 +10,5 @@ libenigma_plugin.so
 libra_plugin.so
 librsa_plugin.so
 main_rsa_enigma.cpp
-
+*.key
+build/
