@@ -1,6 +1,7 @@
 #include "cipher_loader.h"
 #include <iostream>
 #include <dlfcn.h>
+#include <cstring>
 
 using namespace std;
 
@@ -13,6 +14,16 @@ static const char* pluginPaths[] = {
     "./libvigenere.so",
     "./libskitala.so"
 };
+
+template<typename T>
+static void loadSymbol(void* handle, T& funcPtr, const char* symbolName) {
+    void* sym = dlsym(handle, symbolName);
+    if (sym) {
+        memcpy(&funcPtr, &sym, sizeof(funcPtr));
+    } else {
+        funcPtr = nullptr;
+    }
+}
 
 int loadAllPlugins() {
     pluginsLoaded = 0;
@@ -27,13 +38,14 @@ int loadAllPlugins() {
         }
         
         plugins[pluginsLoaded].handle = handle;
-        plugins[pluginsLoaded].get_name = (const char* (*)()) dlsym(handle, "plugin_get_name");
-        plugins[pluginsLoaded].get_key_hint = (const char* (*)()) dlsym(handle, "plugin_get_key_hint");
-        plugins[pluginsLoaded].is_key_valid = (int (*)(const char*)) dlsym(handle, "plugin_is_key_valid");
-        plugins[pluginsLoaded].encrypt_text = (void (*)(const char*, char*, const char*)) dlsym(handle, "plugin_encrypt_text");
-        plugins[pluginsLoaded].decrypt_text = (void (*)(const char*, char*, const char*)) dlsym(handle, "plugin_decrypt_text");
-        plugins[pluginsLoaded].encrypt_block = (void (*)(const char*, char*, size_t, const char*)) dlsym(handle, "plugin_encrypt_block");
-        plugins[pluginsLoaded].decrypt_block = (void (*)(const char*, char*, size_t, const char*)) dlsym(handle, "plugin_decrypt_block");
+        
+        loadSymbol(handle, plugins[pluginsLoaded].get_name, "plugin_get_name");
+        loadSymbol(handle, plugins[pluginsLoaded].get_key_hint, "plugin_get_key_hint");
+        loadSymbol(handle, plugins[pluginsLoaded].is_key_valid, "plugin_is_key_valid");
+        loadSymbol(handle, plugins[pluginsLoaded].encrypt_text, "plugin_encrypt_text");
+        loadSymbol(handle, plugins[pluginsLoaded].decrypt_text, "plugin_decrypt_text");
+        loadSymbol(handle, plugins[pluginsLoaded].encrypt_block, "plugin_encrypt_block");
+        loadSymbol(handle, plugins[pluginsLoaded].decrypt_block, "plugin_decrypt_block");
         
         if (!plugins[pluginsLoaded].get_name) {
             cout << "  Ошибка: отсутствуют функции в плагине" << endl;

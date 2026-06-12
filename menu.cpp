@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <iomanip>
 
 using namespace std;
 
@@ -114,11 +115,33 @@ void handleTextMode(int pluginIndex, int isEncrypt) {
         p->decrypt_text(input, output, key);
     }
     
-    int len = strlen(output);
-    cout << "Результат (текст): " << output << endl;
+    int len = strLength(output);
+    
+    // Вывод текстового результата (без приведения)
+    cout << "Результат (текст): ";
+    for (int i = 0; i < len; i++) {
+        cout << output[i];
+    }
+    cout << endl;
+    
+    // Вывод HEX без приведения типов
     cout << "Результат (HEX): ";
     for (int i = 0; i < len; i++) {
-        cout << hex << uppercase << (int)(unsigned char)output[i] << dec << " ";
+        unsigned char uc = output[i];
+        int value = uc;
+        
+        // Вывод двух шестнадцатеричных цифр без приведения
+        int high = (value >> 4) & 0x0F;
+        int low = value & 0x0F;
+        
+        // Преобразуем в символы
+        char highChar = (high < 10) ? ('0' + high) : ('A' + high - 10);
+        char lowChar = (low < 10) ? ('0' + low) : ('A' + low - 10);
+        
+        cout << highChar << lowChar;
+        if (i < len - 1) {
+            cout << " ";
+        }
     }
     cout << endl;
 }
