@@ -12,3 +12,6 @@ test.txt
 .idea/
 *.swp
 
+cipher_program
+*.o
+*.so
