@@ -1,6 +1,8 @@
 #include "cipher_loader.h"
-#include <stdio.h>
+#include <iostream>
 #include <dlfcn.h>
+
+using namespace std;
 
 #define PLUGIN_COUNT 2
 
@@ -16,11 +18,11 @@ int loadAllPlugins() {
     pluginsLoaded = 0;
     
     for (int i = 0; i < PLUGIN_COUNT; i++) {
-        printf("Загрузка плагина: %s\n", pluginPaths[i]);
+        cout << "Загрузка плагина: " << pluginPaths[i] << endl;
         
         void* handle = dlopen(pluginPaths[i], RTLD_LAZY);
         if (!handle) {
-            printf("  Ошибка: %s\n", dlerror());
+            cout << "  Ошибка: " << dlerror() << endl;
             continue;
         }
         
@@ -34,16 +36,16 @@ int loadAllPlugins() {
         plugins[pluginsLoaded].decrypt_block = (void (*)(const char*, char*, size_t, const char*)) dlsym(handle, "plugin_decrypt_block");
         
         if (!plugins[pluginsLoaded].get_name) {
-            printf("  Ошибка: отсутствуют функции в плагине\n");
+            cout << "  Ошибка: отсутствуют функции в плагине" << endl;
             dlclose(handle);
             continue;
         }
         
         pluginsLoaded++;
-        printf("  → Загружен: %s\n", plugins[pluginsLoaded-1].get_name());
+        cout << "  → Загружен: " << plugins[pluginsLoaded-1].get_name() << endl;
     }
     
-    printf("\nЗагружено плагинов: %d\n", pluginsLoaded);
+    cout << "\nЗагружено плагинов: " << pluginsLoaded << endl;
     return pluginsLoaded;
 }
 
@@ -52,7 +54,7 @@ int getPluginsCount() {
 }
 
 LoadedPlugin* getPlugin(int index) {
-    if (index < 0 || index >= pluginsLoaded) return 0;
+    if (index < 0 || index >= pluginsLoaded) return nullptr;
     return &plugins[index];
 }
 
