@@ -6,6 +6,7 @@
 #include <string>
 #include <stdexcept>
 #include <cstring>
+#include <sstream>
 
 enum MenuAction {
     ACTION_EXIT = 0,
@@ -72,20 +73,45 @@ static void handle_processing(Plugin& rsa, Plugin& enigma, bool is_file_mode) {
         std::string input_text;
         std::getline(std::cin, input_text);
         
-        std::vector<uint32_t> input(input_text.begin(), input_text.end());
-        std::vector<uint32_t> output(input.size());
+        std::vector<uint32_t> input_data;
+        if (choice == 1 && mode == 2) {
+            std::stringstream ss(input_text);
+            std::string hex_token;
+            while (ss >> hex_token) {
+                try {
+                    uint32_t num = std::stoul(hex_token, nullptr, 16);
+                    input_data.push_back(num);
+                } catch (const std::exception&) {
+                    throw std::runtime_error("Ошибка: Неверный формат hex-данных для дешифрования RSA.");
+                }
+            }
+            if (input_data.empty()) {
+                throw std::runtime_error("Ошибка: Пустой ввод для дешифрования.");
+            }
+        } else {
+             for (unsigned char c : input_text) {
+                input_data.push_back(static_cast<uint32_t>(c));
+            }
+        }
         
-        active.process(input.data(), input.size(), key_buf, output.data());
+        std::vector<uint32_t> output(input_data.size());
+        active.process(input_data.data(), input_data.size(), key_buf, output.data());
         
         std::cout << "Результат: ";
-        if (choice == 1) {
+        if (choice == 1 && mode == 1) { 
             for (uint32_t b : output) {
                 std::cout << std::hex << b << " ";
             }
-            std::cout << std::dec << "\n";
-        } else {
-            std::string res(output.begin(), output.end());
-            std::cout << res << "\n";
+            std::cout << std::dec << "\n"; 
+        } else { 
+
+            std::string res;
+            res.reserve(output.size());
+            for (uint32_t val : output) {
+                res.push_back(static_cast<char>(val & 0xFF));
+            }
+            std::cout << res << "\n"; 
+
         }
     } else {
         std::string in_path, out_path;
@@ -108,7 +134,7 @@ static void handle_processing(Plugin& rsa, Plugin& enigma, bool is_file_mode) {
             std::cout << "Готово!\n";
             
             file::write_encrypted_file(out_path, output_data);
-        } else { // Дешифрование
+        } else {
             input_data = file::read_encrypted_file(in_path);
             output_data.resize(input_data.size());
             
