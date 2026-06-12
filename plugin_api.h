@@ -14,11 +14,19 @@
 extern "C" {
 #endif
 
-PLUGIN_EXPORT const char* plugin_get_name();
-PLUGIN_EXPORT const char* plugin_get_key_format();
-PLUGIN_EXPORT void plugin_generate_key(char* out_key, size_t max_len);
-PLUGIN_EXPORT void plugin_process_data(const uint32_t* input, size_t len, 
-                                       const char* key, uint32_t* output);
+// Функции для XOR плагина
+PLUGIN_EXPORT const char* xor_plugin_get_name();
+PLUGIN_EXPORT const char* xor_plugin_get_key_format();
+PLUGIN_EXPORT void xor_plugin_generate_key(char* out_key, size_t max_len);
+PLUGIN_EXPORT void xor_plugin_process_data(const uint32_t* input, size_t len, 
+                                           const char* key, uint32_t* output);
+
+// Функции для TEA плагина
+PLUGIN_EXPORT const char* tea_plugin_get_name();
+PLUGIN_EXPORT const char* tea_plugin_get_key_format();
+PLUGIN_EXPORT void tea_plugin_generate_key(char* out_key, size_t max_len);
+PLUGIN_EXPORT void tea_plugin_process_data(const uint32_t* input, size_t len, 
+                                           const char* key, uint32_t* output);
 
 #ifdef __cplusplus
 }
