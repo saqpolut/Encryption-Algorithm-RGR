@@ -1,7 +1,22 @@
 #include "cipher_loader.h"
 #include <iostream>
-#include <dlfcn.h>
 #include <cstring>
+
+#ifdef _WIN32
+    #include <windows.h>
+    typedef HMODULE LibHandle;
+    #define DLOPEN(name) LoadLibraryA(name)
+    #define DLSYM(handle, sym) (void*)GetProcAddress(handle, sym)
+    #define DLCLOSE(handle) FreeLibrary(handle)
+    #define DLERROR() "LoadLibrary failed"
+#else
+    #include <dlfcn.h>
+    typedef void* LibHandle;
+    #define DLOPEN(name) dlopen(name, RTLD_LAZY)
+    #define DLSYM(handle, sym) dlsym(handle, sym)
+    #define DLCLOSE(handle) dlclose(handle)
+    #define DLERROR() dlerror()
+#endif
 
 using namespace std;
 
@@ -11,13 +26,13 @@ static LoadedPlugin plugins[MAX_PLUGINS];
 static int pluginsLoaded = 0;
 
 static const char* pluginPaths[] = {
-    "./libvigenere.so",
-    "./libskitala.so"
+    "./vigenere_plugin.dll",
+    "./skitala_plugin.dll"
 };
 
 template<typename T>
-static void loadSymbol(void* handle, T& funcPtr, const char* symbolName) {
-    void* sym = dlsym(handle, symbolName);
+static void loadSymbol(LibHandle handle, T& funcPtr, const char* symbolName) {
+    void* sym = DLSYM(handle, symbolName);
     if (sym) {
         memcpy(&funcPtr, &sym, sizeof(funcPtr));
     } else {
@@ -31,13 +46,13 @@ int loadAllPlugins() {
     for (int i = 0; i < PLUGIN_COUNT; i++) {
         cout << "Загрузка плагина: " << pluginPaths[i] << endl;
         
-        void* handle = dlopen(pluginPaths[i], RTLD_LAZY);
+        LibHandle handle = DLOPEN(pluginPaths[i]);
         if (!handle) {
-            cout << "  Ошибка: " << dlerror() << endl;
+            cout << "  Ошибка: " << DLERROR() << endl;
             continue;
         }
         
-        plugins[pluginsLoaded].handle = handle;
+        plugins[pluginsLoaded].handle = (void*)handle;
         
         loadSymbol(handle, plugins[pluginsLoaded].get_name, "plugin_get_name");
         loadSymbol(handle, plugins[pluginsLoaded].get_key_hint, "plugin_get_key_hint");
@@ -49,7 +64,7 @@ int loadAllPlugins() {
         
         if (!plugins[pluginsLoaded].get_name) {
             cout << "  Ошибка: отсутствуют функции в плагине" << endl;
-            dlclose(handle);
+            DLCLOSE(handle);
             continue;
         }
         
@@ -72,7 +87,7 @@ LoadedPlugin* getPlugin(int index) {
 
 void unloadAllPlugins() {
     for (int i = 0; i < pluginsLoaded; i++) {
-        if (plugins[i].handle) dlclose(plugins[i].handle);
+        if (plugins[i].handle) DLCLOSE((LibHandle)plugins[i].handle);
     }
     pluginsLoaded = 0;
 }

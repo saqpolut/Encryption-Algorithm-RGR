@@ -1,4 +1,4 @@
-#define EXPORTING_DLL
+//#define EXPORTING_DLL
 
 #include "cryptoInterface_gronsfeld.h"
 #include "utf8Utils_gronsfeld.h"

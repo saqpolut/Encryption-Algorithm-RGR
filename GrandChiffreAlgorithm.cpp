@@ -1,4 +1,4 @@
-#define GRANDCHIFFRE_EXPORTS
+//#define GRANDCHIFFRE_EXPORTS
 #include "GrandChiffreAlgorithm.h"
 #include <algorithm>
 #include <random>
