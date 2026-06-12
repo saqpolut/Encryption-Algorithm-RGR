@@ -43,26 +43,3 @@ int strLength(const char* str) {
     	return len;
 }
 
-void generateRandomKey(char* key, int maxLen) {
-    	static int seeded = 0;
-    	if (seeded == 0) {
-        	srand(time(0));
-        	seeded = 1;
-    	}
-    
-    	int length = 8;
-    	int r = rand() % 16;
-    	length = length + r;
-    
-    	if (length > maxLen - 1) {
-        	length = maxLen - 1;
-    	}
-    
-    	int i = 0;
-    	while (i < length) {
-        	int r2 = rand() % 94;
-        	key[i] = 33 + r2;
-        	i = i + 1;
-    	}
-    	key[length] = '\0';
-}
