@@ -1,17 +1,15 @@
-// app/include/TextCrypto.h
-#ifndef TEXTCRYPTO_H
-#define TEXTCRYPTO_H
+#ifndef TEXTCRYPTO_CHIFFRE_H
+#define TEXTCRYPTO_CHIFFRE_H
 
-#include "ICryptoAlgorithm.h"
+#include "ICryptoAlgorithm_chiffre.h"
 #include <string>
 #include <vector>
 
-using namespace std;
-
 class TextCrypto {
 public:
-//применение алгоритма шифровки/дишифровки к строке, возвращение резутьтата (стороку)
-    static string encryptDecrypt(ICryptoAlgorithm* alg, const vector<uint8_t>& key, const string& input);
+    static std::string encryptDecrypt(ICryptoAlgorithm* alg,
+                                      const std::vector<uint8_t>& key,
+                                      const std::string& input);
 };
 
 #endif

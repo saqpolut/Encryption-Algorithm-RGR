@@ -1,21 +1,18 @@
-// plugins/grandchiffre/src/GrandChiffreAlgorithm.h
-#ifndef GRANDCHIFFRE_ALGORITHM_H
-#define GRANDCHIFFRE_ALGORITHM_H
+#ifndef GRANDCHIFFREALGORITHM_H
+#define GRANDCHIFFREALGORITHM_H
 
-#include "ICryptoAlgorithm.h"
-
-using namespace std;
+#include "ICryptoAlgorithm_chiffre.h"
 
 class GrandChiffreAlgorithm : public ICryptoAlgorithm {
 public:
-    void process(const vector<uint8_t>& key, vector<uint8_t>& data) override;
-    vector<uint8_t> generateKey(size_t length) override;
-    size_t getMinKeyLength() const override { return 5; }  //минимум по гост (условно)
-    size_t getMaxKeyLength() const override { return 256; }  //максимум для RC4
+    void process(const std::vector<uint8_t>& key, std::vector<uint8_t>& data) override;
+    std::vector<uint8_t> generateKey(size_t length) override;
+    size_t getMinKeyLength() const override { return 5; }
+    size_t getMaxKeyLength() const override { return 256; }
 
 private:
-    void rc4_init(const vector<uint8_t>& key, vector<uint8_t>& S);
-    void rc4_crypt(const vector<uint8_t>& S, vector<uint8_t>& data);
+    void rc4_init(const std::vector<uint8_t>& key, std::vector<uint8_t>& S);
+    void rc4_crypt(const std::vector<uint8_t>& S, std::vector<uint8_t>& data);
 };
 
 #endif

@@ -1,10 +1,8 @@
-// app/src/CryptoLoader_chiffre.cpp
 #include "CryptoLoader_chiffre.h"
 #include <iostream>
 
-using namespace std;
-
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 static HMODULE g_handle = nullptr;
 #else
@@ -15,13 +13,13 @@ static void* g_handle = nullptr;
 static ICryptoAlgorithm* g_algorithm = nullptr;
 static void (*g_destroyFunc)(ICryptoAlgorithm*) = nullptr;
 
-bool load_plugin(const string& libPath) {
+bool load_plugin(const std::string& libPath) {
     unload_plugin();
 
 #ifdef _WIN32
     g_handle = LoadLibraryA(libPath.c_str());
     if (!g_handle) {
-        cerr << "LoadLibrary failed: " << GetLastError() << endl;
+        std::cerr << "LoadLibrary failed: " << GetLastError() << std::endl;
         return false;
     }
     auto createFunc = (ICryptoAlgorithm* (*)()) GetProcAddress(g_handle, "create_algorithm");
@@ -29,7 +27,7 @@ bool load_plugin(const string& libPath) {
 #else
     g_handle = dlopen(libPath.c_str(), RTLD_LAZY);
     if (!g_handle) {
-        cerr << "dlopen failed: " << dlerror() << endl;
+        std::cerr << "dlopen failed: " << dlerror() << std::endl;
         return false;
     }
     auto createFunc = (ICryptoAlgorithm* (*)()) dlsym(g_handle, "create_algorithm");
@@ -37,14 +35,14 @@ bool load_plugin(const string& libPath) {
 #endif
 
     if (!createFunc || !g_destroyFunc) {
-        cerr << "Missing create/destroy functions in plugin" << endl;
+        std::cerr << "Missing create/destroy functions in plugin" << std::endl;
         unload_plugin();
         return false;
     }
 
     g_algorithm = createFunc();
     if (!g_algorithm) {
-        cerr << "Failed to instantiate algorithm" << endl;
+        std::cerr << "Failed to instantiate algorithm" << std::endl;
         unload_plugin();
         return false;
     }
