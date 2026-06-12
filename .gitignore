@@ -1,14 +1,37 @@
+cat > .gitignore << 'EOF'
+# Объектные файлы
+*.o
+*.so
+
+# Исполняемые файлы
+cipher_program
+rgr_app
+
+# Тестовые файлы
 dec.txt
 dec1.txt
 dec.bin
 dec1.bin
 enc.bin
-rgr_app
 test.txt
 test1.txt
+
+# Плагины
 libenigma_plugin.so
 libra_plugin.so
 librsa_plugin.so
+
+# Исходники
 main_rsa_enigma.cpp
+
+# Ключи
 *.key
+
+# Директории
 build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+EOF
