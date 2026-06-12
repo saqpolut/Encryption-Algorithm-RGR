@@ -1,4 +1,4 @@
-cat > .gitignore << 'EOF'
+
 # Объектные файлы
 *.o
 *.so
@@ -34,4 +34,4 @@ build/
 .vscode/
 .idea/
 *.swp
-EOF
+
