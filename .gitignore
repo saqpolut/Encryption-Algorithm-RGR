@@ -1,0 +1,14 @@
+
+*.o
+*.so
+encrypt
+*.txt
+*.bin
+dec.txt
+dec1.txt
+enc.bin
+test.txt
+.vscode/
+.idea/
+*.swp
+
