@@ -1,16 +1,16 @@
-// app/include/FileCrypto.h
-#ifndef FILECRYPTO_H
-#define FILECRYPTO_H
+#ifndef FILECRYPTO_CHIFFRE_H
+#define FILECRYPTO_CHIFFRE_H
 
-#include "ICryptoAlgorithm.h"
+#include "ICryptoAlgorithm_chiffre.h"
 #include <string>
-
-using namespace std;
+#include <vector>
 
 class FileCrypto {
 public:
-//чтение входного файла блоками, применение алгоритма и запись результата
-    static bool encryptDecryptFile(ICryptoAlgorithm* alg, const vector<uint8_t>& key, const string& inputPath, const string& outputPath);
+    static bool encryptDecryptFile(ICryptoAlgorithm* alg,
+                                   const std::vector<uint8_t>& key,
+                                   const std::string& inputPath,
+                                   const std::string& outputPath);
 };
 
 #endif

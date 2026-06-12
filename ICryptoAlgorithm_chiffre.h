@@ -1,13 +1,10 @@
-// app/include/ICryptoAlgorithm.h
-#ifndef ICRYPTOALGORITHM_H
-#define ICRYPTOALGORITHM_H
+#ifndef ICRYPTOALGORITHM_CHIFFRE_H
+#define ICRYPTOALGORITHM_CHIFFRE_H
 
 #include <vector>
 #include <cstdint>
 
-using namespace std;
-
-//макросы для экспорта или импорта в динамических библиотреках
+// Макросы для экспорта/импорта в динамических библиотеках
 #ifdef _WIN32
     #ifdef GRANDCHIFFRE_EXPORTS
         #define GRANDCHIFFRE_API __declspec(dllexport)
@@ -21,9 +18,14 @@ using namespace std;
 class ICryptoAlgorithm {
 public:
     virtual ~ICryptoAlgorithm() = default;
-    virtual void process(const vector<uint8_t>& key, vector<uint8_t>& data) = 0;  //шифрование/дишифрование
-    virtual vector<uint8_t> generateKey(size_t length) = 0;  //генерация случайного ключа заданной длины
-    //допустимая длина ключа 
+
+    // Шифрование/дешифрование (in-place)
+    virtual void process(const std::vector<uint8_t>& key, std::vector<uint8_t>& data) = 0;
+
+    // Генерация случайного ключа заданной длины (байт)
+    virtual std::vector<uint8_t> generateKey(size_t length) = 0;
+
+    // Допустимые границы длины ключа
     virtual size_t getMinKeyLength() const = 0;
     virtual size_t getMaxKeyLength() const = 0;
 };

@@ -1,13 +1,13 @@
-// plugins/grandchiffre/src/GrandChiffreAlgorithm.cpp
+#define GRANDCHIFFRE_EXPORTS
 #include "GrandChiffreAlgorithm.h"
 #include <algorithm>
 #include <random>
 #include <chrono>
 #include <stdexcept>
+#include <cstdint>
 
 using namespace std;
 
-//инициализация S-блока RC4
 void GrandChiffreAlgorithm::rc4_init(const vector<uint8_t>& key, vector<uint8_t>& S) {
     S.resize(256);
     for (int i = 0; i < 256; ++i)
@@ -15,25 +15,23 @@ void GrandChiffreAlgorithm::rc4_init(const vector<uint8_t>& key, vector<uint8_t>
 
     int j = 0;
     for (int i = 0; i < 256; ++i) {
-        j = (j + S[i] + key[i % key.size()]) & 0xFF;  //псевдослучайное переставление
+        j = (j + S[i] + key[i % key.size()]) & 0xFF;
         swap(S[i], S[j]);
     }
 }
 
-//генерация псевдослучайной гаммы и наложение (xor) на данные
 void GrandChiffreAlgorithm::rc4_crypt(const vector<uint8_t>& S, vector<uint8_t>& data) {
-    vector<uint8_t> state = S;  //локальная копия состояния
+    vector<uint8_t> state = S;
     int i = 0, j = 0;
     for (size_t k = 0; k < data.size(); ++k) {
         i = (i + 1) & 0xFF;
         j = (j + state[i]) & 0xFF;
         swap(state[i], state[j]);
         uint8_t keystream = state[(state[i] + state[j]) & 0xFF];
-        data[k] ^= keystream;  //шифрование / дишифрование
+        data[k] ^= keystream;
     }
 }
 
-//проверка ключа, инициализация и преобразование данных
 void GrandChiffreAlgorithm::process(const vector<uint8_t>& key, vector<uint8_t>& data) {
     if (key.size() < getMinKeyLength() || key.size() > getMaxKeyLength())
         throw invalid_argument("Key length out of allowed range");
@@ -43,7 +41,6 @@ void GrandChiffreAlgorithm::process(const vector<uint8_t>& key, vector<uint8_t>&
     rc4_crypt(S, data);
 }
 
-//генерация случайного ключа заданной длины
 vector<uint8_t> GrandChiffreAlgorithm::generateKey(size_t length) {
     if (length < getMinKeyLength()) length = getMinKeyLength();
     if (length > getMaxKeyLength()) length = getMaxKeyLength();
@@ -57,3 +54,16 @@ vector<uint8_t> GrandChiffreAlgorithm::generateKey(size_t length) {
         key[i] = dist(gen);
     return key;
 }
+
+//ЭКСПОРТИРУЕМЫЕ ФУНКЦИИ
+extern "C" {
+
+GRANDCHIFFRE_API ICryptoAlgorithm* create_algorithm() {
+    return new GrandChiffreAlgorithm();
+}
+
+GRANDCHIFFRE_API void destroy_algorithm(ICryptoAlgorithm* alg) {
+    delete alg;
+}
+
+} // extern "C"

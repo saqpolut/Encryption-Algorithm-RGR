@@ -1,38 +1,37 @@
-// app/src/FileCrypto.cpp
-#include "FileCrypto.h"
+#include "FileCrypto_chiffre.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-using namespace std;
-
-bool FileCrypto::encryptDecryptFile(ICryptoAlgorithm* alg, const vector<uint8_t>& key, const string& inputPath, const string& outputPath) {
+bool FileCrypto::encryptDecryptFile(ICryptoAlgorithm* alg,
+                                    const std::vector<uint8_t>& key,
+                                    const std::string& inputPath,
+                                    const std::string& outputPath) {
     if (!alg) return false;
 
-    ifstream inFile(inputPath, ios::binary);  //открытие файла в бинарном режиме
+    std::ifstream inFile(inputPath, std::ios::binary);
     if (!inFile) {
-        cerr << "Cannot open input file: " << inputPath << endl;
+        std::cerr << "Cannot open input file: " << inputPath << std::endl;
         return false;
     }
-    ofstream outFile(outputPath, ios::binary);  //выходной файл в бинарном режиме
+    std::ofstream outFile(outputPath, std::ios::binary);
     if (!outFile) {
-        cerr << "Cannot create output file: " << outputPath << endl;
+        std::cerr << "Cannot create output file: " << outputPath << std::endl;
         return false;
     }
 
-    const size_t bufferSize = 64 * 1024;  //буфер для чтения блоками
-    vector<uint8_t> buffer(bufferSize);
+    const size_t bufferSize = 64 * 1024;
+    std::vector<uint8_t> buffer(bufferSize);
 
-    //чтение файла порциями
     while (inFile) {
         inFile.read(reinterpret_cast<char*>(buffer.data()), bufferSize);
-        streamsize bytesRead = inFile.gcount();  //сколько бит прочитанно
+        std::streamsize bytesRead = inFile.gcount();
         if (bytesRead > 0) {
-            vector<uint8_t> chunk(buffer.begin(), buffer.begin() + bytesRead);  //копируем прочитанное
-            alg->process(key, chunk);  //шифровка/дишифровка
-            outFile.write(reinterpret_cast<char*>(chunk.data()), chunk.size());  //запись обработанного блока в выходной файл
+            std::vector<uint8_t> chunk(buffer.begin(), buffer.begin() + bytesRead);
+            alg->process(key, chunk);
+            outFile.write(reinterpret_cast<char*>(chunk.data()), chunk.size());
             if (!outFile) {
-                cerr << "Write error" << endl;
+                std::cerr << "Write error" << std::endl;
                 return false;
             }
         }

@@ -1,12 +1,11 @@
-// app/src/TextCrypto.cpp
-#include "TextCrypto.h"
+#include "TextCrypto_chiffre.h"
 #include <stdexcept>
 
-using namespace std;
-
-string TextCrypto::encryptDecrypt(ICryptoAlgorithm* alg, const vector<uint8_t>& key, const string& input) {
-    if (!alg) throw invalid_argument("Algorithm is null");
-    vector<uint8_t> data(input.begin(), input.end());  //преобразование в вектор байт
+std::string TextCrypto::encryptDecrypt(ICryptoAlgorithm* alg,
+                                       const std::vector<uint8_t>& key,
+                                       const std::string& input) {
+    if (!alg) throw std::invalid_argument("Algorithm is null");
+    std::vector<uint8_t> data(input.begin(), input.end());
     alg->process(key, data);
-    return string(data.begin(), data.end());
+    return std::string(data.begin(), data.end());
 }
