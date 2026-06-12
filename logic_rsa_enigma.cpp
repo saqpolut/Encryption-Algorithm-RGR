@@ -185,21 +185,11 @@ void run_application() {
 
         try {
             switch (choice) {
-                case ACTION_KEY_GENERATION:
-                    handle_key_generation(rsa, enigma);
-                    break;
-                case ACTION_TEXT_PROCESSING:
-                    handle_processing(rsa, enigma, false);
-                    break;
-                case ACTION_FILE_PROCESSING:
-                    handle_processing(rsa, enigma, true);
-                    break;
-                case ACTION_EXIT:
-                    running = false;
-                    std::cout << "Завершение работы.\n";
-                    break;
-                default:
-                    std::cout << "Неверный выбор.\n";
+                case RSA_ENIGMA_KEY_GEN: handle_key_generation(rsa, enigma); break;
+                case RSA_ENIGMA_TEXT_PROC: handle_processing(rsa, enigma, false); break;
+                case RSA_ENIGMA_FILE_PROC: handle_processing(rsa, enigma, true); break;
+                case RSA_ENIGMA_EXIT: running = false; break;
+                default: std::cout << "Неверный выбор.\n";
             }
         } catch (const std::exception& e) {
             std::cerr << "\n[ОШИБКА] " << e.what() << "\n\n";

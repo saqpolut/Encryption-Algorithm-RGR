@@ -16,6 +16,15 @@
 #include <fstream>
 #include <string>
 
+enum MainMenuAction {
+    ACTION_EXIT = 0,
+    ACTION_VIGENERE_SKITALA = 1,
+    ACTION_RSA_ENIGMA = 2,
+    ACTION_XOR_TEA = 3,
+    ACTION_GRONSFELD = 4,
+    ACTION_GRANDCHIFFRE = 5
+};
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -27,6 +36,7 @@ void clearInput() {
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
+
 
 // ========== Вспомогательные функции для плагинов Виженер/Скитала ==========
 void handleTextMode(int pluginIdx, bool isEncrypt) {
@@ -599,18 +609,14 @@ int main() {
         clearInput();
 
         switch (choice) {
-            case 1: runVigenereSkitala(); break;
-            case 2: runRSAEnigma();       break;
-            case 3: runXorTea();          break;
-            case 4: runGronsfeld();       break;
-            case 5: runGrandChiffre();    break;
-            case 0:
-                running = false;
-                cout << "\nДо свидания!" << endl;
-                break;
-            default:
-                cout << "Неверный выбор!" << endl;
-        }
+    case ACTION_VIGENERE_SKITALA: runVigenereSkitala(); break;
+    case ACTION_RSA_ENIGMA:       runRSAEnigma();       break;
+    case ACTION_XOR_TEA:          runXorTea();          break;
+    case ACTION_GRONSFELD:        runGronsfeld();       break;
+    case ACTION_GRANDCHIFFRE:     runGrandChiffre();    break;
+    case ACTION_EXIT:             running = false;      break;
+    default: cout << "Неверный выбор!" << endl;
+}
     }
 
     return 0;
