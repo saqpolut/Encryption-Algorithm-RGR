@@ -11,4 +11,16 @@ test.txt
 .vscode/
 .idea/
 *.swp
+dec.txt
+dec1.txt
+dec.bin
+dec1.bin
+enc.bin
+rgr_app
+test.txt
+test1.txt
+libenigma_plugin.so
+libra_plugin.so
+librsa_plugin.so
+main_rsa_enigma.cpp
 
