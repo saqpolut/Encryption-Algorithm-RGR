@@ -1,5 +1,5 @@
-#ifndef UTF8UTILS_H
-#define UTF8UTILS_H
+#ifndef UTF8UTILS_GRONSFELD_H
+#define UTF8UTILS_GRONSFELD_H
 
 #include <string>
 #include <vector>
