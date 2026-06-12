@@ -1,0 +1,11 @@
+dec.txt
+dec1.txt
+dec.bin
+dec1.bin
+enc.bin
+rgr_app
+test.txt
+test1.txt
+libxor_plugin.so
+libtea_plugin.so
+*.key
