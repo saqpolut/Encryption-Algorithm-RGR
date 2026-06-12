@@ -13,6 +13,8 @@
 #include <vector>
 #include <exception>
 #include <limits>
+#include <fstream>
+#include <string>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -128,8 +130,8 @@ void runVigenereSkitala() {
     if (loadAllPlugins() == 0) {
         cout << "ОШИБКА: Не удалось загрузить плагины!" << endl;
         cout << "Убедитесь, что рядом с программой есть:" << endl;
-        cout << "  - libvigenere.so (или .dll)" << endl;
-        cout << "  - libskitala.so  (или .dll)" << endl;
+        cout << "  - vigenere_plugin.dll" << endl;
+        cout << "  - skitala_plugin.dll" << endl;
         return;
     }
 
@@ -253,7 +255,7 @@ void runXorTea() {
     }
 }
 
-// ========== Подсистема 4: Gronsfeld ==========
+// ========== Подсистема 4: Gronsfeld (с поддержкой файлов) ==========
 void runGronsfeld() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: GRONSFELD\n";
@@ -282,11 +284,19 @@ void runGronsfeld() {
     char* outputText = nullptr;
     int keyLen;
 
+    // Переменные для работы с файлами
+    string inFilePath, outFilePath;
+    string fileContent;
+    ifstream inFile;
+    ofstream outFile;
+
     while (!exitSub) {
         cout << "\n1. Сгенерировать ключ" << endl;
         cout << "2. Зашифровать текст" << endl;
         cout << "3. Расшифровать текст" << endl;
         cout << "4. Проверить ключ" << endl;
+        cout << "5. Зашифровать файл" << endl;
+        cout << "6. Расшифровать файл" << endl;
         cout << "0. Назад" << endl;
         cout << "Выбор: ";
 
@@ -339,6 +349,55 @@ void runGronsfeld() {
             cin.getline(key, sizeof(key));
             cout << (loader.validateKey(key) ? "Ключ корректен" : "Ключ НЕ корректен") << endl;
         }
+        else if (ch == 5 || ch == 6) {
+            // Шифрование или дешифрование файла
+            cout << "Введите путь к входному файлу: ";
+            getline(cin, inFilePath);
+            cout << "Введите путь к выходному файлу: ";
+            getline(cin, outFilePath);
+            cout << "Введите ключ (цифры): ";
+            cin.getline(key, sizeof(key));
+
+            if (!loader.validateKey(key)) {
+                cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
+                continue;
+            }
+
+            // Чтение входного файла
+            inFile.open(inFilePath, ios::binary);
+            if (!inFile) {
+                cout << "Ошибка: не удалось открыть файл " << inFilePath << endl;
+                continue;
+            }
+            fileContent.assign((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
+            inFile.close();
+
+            // Обработка содержимого
+            int res;
+            if (ch == 5) {
+                res = loader.encrypt(fileContent.c_str(), (int)fileContent.size(), key, &outputText);
+                cout << "Шифрование файла выполнено. ";
+            } else {
+                res = loader.decrypt(fileContent.c_str(), (int)fileContent.size(), key, &outputText);
+                cout << "Дешифрование файла выполнено. ";
+            }
+
+            if (res > 0 && outputText) {
+                // Запись результата в выходной файл
+                outFile.open(outFilePath, ios::binary);
+                if (!outFile) {
+                    cout << "Ошибка: не удалось создать файл " << outFilePath << endl;
+                } else {
+                    outFile.write(outputText, res);
+                    outFile.close();
+                    cout << "Результат сохранён в " << outFilePath << endl;
+                }
+                loader.freeMemory(outputText);
+                outputText = nullptr;
+            } else {
+                cout << "Ошибка обработки файла." << endl;
+            }
+        }
     }
 
     loader.unload();
@@ -347,7 +406,7 @@ void runGronsfeld() {
 // ========== Подсистема 5: GrandChiffre ==========
 void runGrandChiffre() {
     cout << "\n========================================\n";
-    cout << "    ПОДСИСТЕМА: GRANDCHIFFRE\n";
+    cout << "    ПОДСИСТЕМА: GRAND CHIFFRE\n";
     cout << "========================================\n";
 
     string libPath;
