@@ -1,69 +1,70 @@
 #include "menu.h"
 #include "cipher_loader.h"
 #include "utils.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <string>
+
+using namespace std;
 
 int main() {
-    	try {
-        	printSeparator();
-        	printf("   Шифры: ВИЖЕНЕР + СКИТАЛА\n");
-        	printf("   Динамически подключаемые библиотеки\n");
-        	printSeparator();
+    try {
+        printSeparator();
+        cout << "   Шифры: ВИЖЕНЕР + СКИТАЛА" << endl;
+        cout << "   Динамически подключаемые библиотеки" << endl;
+        printSeparator();
         
-        	if (loadAllPlugins() == 0) {
-            		printf("ОШИБКА: Не удалось загрузить плагины!\n");
-            		printf("Убедитесь, что рядом с программой есть:\n");
-            		printf("  - libvigenere.so\n");
-            		printf("  - libskitala.so\n");
-            		return 1;
-        	}
+        if (loadAllPlugins() == 0) {
+            cout << "ОШИБКА: Не удалось загрузить плагины!" << endl;
+            cout << "Убедитесь, что рядом с программой есть:" << endl;
+            cout << "  - libvigenere.so" << endl;
+            cout << "  - libskitala.so" << endl;
+            return 1;
+        }
         
-        	int choice, pluginIdx, isEncrypt, isFile;
-		// choise - пункт главного меню, isEncrypt - шифрование/дешифрование
-        	
-        	while (1) {
-            		showMainMenu();
-            		scanf("%d", &choice);
-            		clearInputBuffer();
-            
-            		if (choice == 0) {
-                		printf("\nДо свидания!\n");
-                		break;
-            		}
-            
-            		if (choice < 1 || choice > 4) {
-                		printf("Неверный выбор!\n");
-                		continue;
-            		}
-            
-            		isFile = (choice == 3 || choice == 4);
-            		isEncrypt = (choice == 1 || choice == 3);
-            
-            		printf("\nВыберите алгоритм (1-%d): ", getPluginsCount());
-            		scanf("%d", &pluginIdx);
-            		clearInputBuffer();
-            
-            		if (pluginIdx < 1 || pluginIdx > getPluginsCount()) {
-                		printf("Неверный выбор!\n");
-                		continue;
-            		}
-            
-            		if (isFile) {
-                		handleFileMode(pluginIdx - 1, isEncrypt);
-            		} else {
-                		handleTextMode(pluginIdx - 1, isEncrypt);
-            		}
-            
-            		waitForEnter();
-        	}
+        int choice, pluginIdx, isEncrypt, isFile;
         
-        unloadAllPlugins(); // освобождение памяти
+        while (1) {
+            showMainMenu();
+            cin >> choice;
+            clearInputBuffer();
+            
+            if (choice == 0) {
+                cout << "\nДо свидания!" << endl;
+                break;
+            }
+            
+            if (choice < 1 || choice > 4) {
+                cout << "Неверный выбор!" << endl;
+                continue;
+            }
+            
+            isFile = (choice == 3 || choice == 4);
+            isEncrypt = (choice == 1 || choice == 3);
+            
+            cout << "\nВыберите алгоритм (1-" << getPluginsCount() << "): ";
+            cin >> pluginIdx;
+            clearInputBuffer();
+            
+            if (pluginIdx < 1 || pluginIdx > getPluginsCount()) {
+                cout << "Неверный выбор!" << endl;
+                continue;
+            }
+            
+            if (isFile) {
+                handleFileMode(pluginIdx - 1, isEncrypt);
+            } else {
+                handleTextMode(pluginIdx - 1, isEncrypt);
+            }
+            
+            waitForEnter();
+        }
         
-    	} catch (...) {
-        	printf("Критическая ошибка в программе!\n");
-        	return 1;
-    	}
+        unloadAllPlugins();
+        
+    } catch (...) {
+        cout << "Критическая ошибка в программе!" << endl;
+        return 1;
+    }
     
-    	return 0;
+    return 0;
 }
