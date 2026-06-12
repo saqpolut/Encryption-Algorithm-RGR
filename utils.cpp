@@ -9,10 +9,10 @@ void clearInputBuffer() {
 }
 
 void removeNewline(char* str) {
-    	if (!str) return;
+    	if (str == 0) return;
     	int len = 0;
     	while (str[len] != '\0') {
-        	len++;
+        	len = len + 1;
     	}
     	if (len > 0 && str[len-1] == '\n') {
         	str[len-1] = '\0';
@@ -26,7 +26,7 @@ int isEmpty(const char* str) {
 }
 
 void printSeparator() {
-    printf("\n========================================\n");
+    	printf("\n========================================\n");
 }
 
 void waitForEnter() {
@@ -38,7 +38,7 @@ void waitForEnter() {
 int strLength(const char* str) {
     	int len = 0;
     	while (str[len] != '\0') {
-        	len++;
+        	len = len + 1;
     	}
     	return len;
 }
@@ -60,8 +60,8 @@ void generateRandomKey(char* key, int maxLen) {
     
     	int i = 0;
     	while (i < length) {
-        	int r = rand() % 94;
-        	key[i] = 33 + r;
+        	int r2 = rand() % 94;
+        	key[i] = 33 + r2;
         	i = i + 1;
     	}
     	key[length] = '\0';
