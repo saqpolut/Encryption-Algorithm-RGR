@@ -1,6 +1,6 @@
 #include "cipher_plugin.h"
 #include "vigener_impl.h"
-#include <string.h>
+#include <cstring>
 
 PLUGIN_API const char* plugin_get_name() {
     return "Виженер";

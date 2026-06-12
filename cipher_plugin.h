@@ -17,7 +17,6 @@
 extern "C" {
 #endif
 
-// Функции плагина
 PLUGIN_API const char* plugin_get_name();
 PLUGIN_API const char* plugin_get_key_hint();
 PLUGIN_API int plugin_is_key_valid(const char* key);

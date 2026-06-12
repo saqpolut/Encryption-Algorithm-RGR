@@ -1,11 +1,14 @@
 #include "utils.h"
 #include <iostream>
-#include <string>
 #include <cstdlib>
 #include <ctime>
 #include <limits>
 
 using namespace std;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void clearInputBuffer() {
     cin.clear();
@@ -46,3 +49,7 @@ int strLength(const char* str) {
     }
     return len;
 }
+
+#ifdef __cplusplus
+}
+#endif

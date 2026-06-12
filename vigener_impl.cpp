@@ -1,13 +1,13 @@
 #include "vigener_impl.h"
 #include "utils.h"
-#include <string.h>
+#include <cstring>
 
 void vigenerEncrypt(const char* input, char* output, const char* key) {
     int len = strLength(input);
     int keyLen = strLength(key);
     
     if (keyLen == 0) {
-        strcpy(output, input);
+        std::strcpy(output, input);
         return;
     }
     
@@ -22,7 +22,7 @@ void vigenerDecrypt(const char* input, char* output, const char* key) {
     int keyLen = strLength(key);
     
     if (keyLen == 0) {
-        strcpy(output, input);
+        std::strcpy(output, input);
         return;
     }
     
