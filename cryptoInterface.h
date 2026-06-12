@@ -3,6 +3,10 @@
 
 #include <cstdint>
 
+#ifdef __INTELLISENSE__
+    #define _WIN32
+#endif
+
 #ifdef _WIN32
     #ifdef EXPORTING_DLL
         #define CRYPTO_API __declspec(dllexport)
