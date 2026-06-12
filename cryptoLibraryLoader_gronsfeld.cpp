@@ -1,7 +1,7 @@
-#include "cryptoLibraryLoader.h"
+#include "cryptoLibraryLoader_gronsfeld.h"
 #include <iostream>
 
-cryptoLibraryLoader::cryptoLibraryLoader() : handle(nullptr),
+CryptoLibraryLoader::CryptoLibraryLoader() : handle(nullptr),
     pGetAlgorithmName(nullptr), pGenerateKey(nullptr), pEncrypt(nullptr),
     pDecrypt(nullptr), pFreeMemory(nullptr), pValidateKey(nullptr) {}
 
@@ -30,7 +30,8 @@ bool CryptoLibraryLoader::load(const std::string& libraryPath) {
 #endif
     if (!pGetAlgorithmName || !pGenerateKey || !pEncrypt || !pDecrypt || !pFreeMemory || !pValidateKey) {
         std::cerr << "Missing required symbols" << std::endl;
-        unload(); return false;
+        unload();
+        return false;
     }
     return true;
 }
@@ -43,6 +44,12 @@ void CryptoLibraryLoader::unload() {
         dlclose(handle);
 #endif
         handle = nullptr;
+        pGetAlgorithmName = nullptr;
+        pGenerateKey = nullptr;
+        pEncrypt = nullptr;
+        pDecrypt = nullptr;
+        pFreeMemory = nullptr;
+        pValidateKey = nullptr;
     }
 }
 

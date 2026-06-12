@@ -1,5 +1,7 @@
-#include "cryptoInterface.h"
-#include "utf8Utils.h"
+#define EXPORTING_DLL
+
+#include "cryptoInterface_gronsfeld.h"
+#include "utf8Utils_gronsfeld.h"
 #include <string>
 #include <vector>
 #include <cstring>
@@ -16,18 +18,22 @@ static bool isValidKey(const std::string& key) {
 static std::string process(const std::string& input, const std::string& key, int direction) {
     if (!isValidKey(key)) return "";
     
-    std::vector<uint32_t> codepoints = utf8::toCodepoints(input);
-    size_t keyLen = key.length(), keyPos = 0;
-    
-    for (uint32_t& cp : codepoints) {
-        if (utf8::isLetter(cp)) {
-            int shift = key[keyPos % keyLen] - '0';
-            if (direction == -1) shift = -shift;
-            cp = utf8::shiftLetter(cp, shift);
-            keyPos++;
+    try {
+        std::vector<uint32_t> codepoints = utf8::toCodepoints(input);
+        size_t keyLen = key.length(), keyPos = 0;
+        
+        for (uint32_t& cp : codepoints) {
+            if (utf8::isLetter(cp)) {
+                int shift = key[keyPos % keyLen] - '0';
+                if (direction == -1) shift = -shift;
+                cp = utf8::shiftLetter(cp, shift);
+                keyPos++;
+            }
         }
+        return utf8::fromCodepoints(codepoints);
+    } catch (const std::exception&) {
+        return "";
     }
-    return utf8::fromCodepoints(codepoints);
 }
 
 CRYPTO_API const char* getAlgorithmName() {

@@ -1,11 +1,7 @@
-#ifndef CRYPTOINTERFACE_H
-#define CRYPTOINTERFACE_H
+#ifndef CRYPTOINTERFACE_GRONSFELD_H
+#define CRYPTOINTERFACE_GRONSFELD_H
 
 #include <cstdint>
-
-#ifdef __INTELLISENSE__
-    #define _WIN32
-#endif
 
 #ifdef _WIN32
     #ifdef EXPORTING_DLL
