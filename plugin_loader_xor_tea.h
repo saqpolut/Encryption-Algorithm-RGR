@@ -2,6 +2,7 @@
 #define PLUGIN_LOADER_XOR_TEA_H
 
 #include <cstddef>
+#include<cstdint>
 
 namespace Crypto {
     void load_plugin(const char* algo);

@@ -1,12 +1,16 @@
 #ifndef FILE_XOR_TEA_H
 #define FILE_XOR_TEA_H
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace Crypto {
-    void process_file(const char* input_path, const char* output_path,
-                      const char* key, bool encrypt);
+    std::vector<uint8_t> readFile(const std::string& path);
+    bool writeFile(const std::string& path, const std::vector<uint8_t>& data);
+    bool fileExists(const std::string& path);
+    uint64_t getFileSize(const std::string& path);
 }
 
 #endif

@@ -1,3 +1,6 @@
+#ifndef XOR_PLUGIN_CPP
+#define XOR_PLUGIN_CPP
+
 #include "xor_tea_api.h"
 #include <cstring>
 #include <random>
@@ -40,3 +43,5 @@ PLUGIN_EXPORT void xor_plugin_process_data(const uint32_t* input, size_t len,
 }
 
 }
+
+#endif
