@@ -1,17 +1,28 @@
+# Добавляем недостающие правила в конец файла
+cat >> .gitignore << 'EOF'
 
-*.o
-*.so
+# Ваши исполняемые файлы и объектники
+cipher_prog
+ram
 encrypt
-*.txt
-*.bin
+cipher_program
+utils.o
+libvigeneres.o
+libskitala.so
+
+# Временные файлы LibreOffice
+*.odt
+*.lock
+#*#
+*~
+
+# Ваши тестовые файлы
 dec.txt
 dec1.txt
 enc.bin
-test.txt
-.vscode/
-.idea/
-*.swp
+*.bin
+*.txt
 
-cipher_program
-*.o
-*.so
+# Ваша папка сборки
+build/
+EOF
