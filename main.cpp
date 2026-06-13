@@ -191,7 +191,6 @@ void runRSAEnigma() {
 }
 
 // ========== Подсистема 3: XOR + TEA (расширенная) ==========
-// Вспомогательные функции для работы с байтами и uint32_t
 vector<uint32_t> bytesToUint32(const vector<uint8_t>& bytes, size_t blockSize) {
     vector<uint32_t> result;
     size_t numBlocks = (bytes.size() + blockSize - 1) / blockSize;
@@ -382,7 +381,48 @@ void runXorTea() {
     }
 }
 
-// ========== Подсистема 4: Gronsfeld ==========
+// ========== Подсистема 4: Gronsfeld (с поддержкой файлов) ==========
+// Вспомогательная функция для обработки файла Gronsfeld
+bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, const string& outPath, const string& key, bool encrypt) {
+    // Читаем весь файл как текст (UTF-8)
+    ifstream inFile(inPath, ios::binary);
+    if (!inFile) {
+        cerr << "Ошибка: не удалось открыть входной файл " << inPath << endl;
+        return false;
+    }
+    string content((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
+    inFile.close();
+
+    if (content.empty()) {
+        cerr << "Входной файл пуст" << endl;
+        return false;
+    }
+
+    char* outputText = nullptr;
+    int result;
+    if (encrypt) {
+        result = loader.encrypt(content.c_str(), (int)content.size(), key.c_str(), &outputText);
+    } else {
+        result = loader.decrypt(content.c_str(), (int)content.size(), key.c_str(), &outputText);
+    }
+
+    if (result < 0 || !outputText) {
+        cerr << "Ошибка обработки данных" << endl;
+        return false;
+    }
+
+    ofstream outFile(outPath, ios::binary);
+    if (!outFile) {
+        cerr << "Ошибка: не удалось создать выходной файл " << outPath << endl;
+        loader.freeMemory(outputText);
+        return false;
+    }
+    outFile.write(outputText, result);
+    outFile.close();
+    loader.freeMemory(outputText);
+    return true;
+}
+
 void runGronsfeld() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: GRONSFELD\n";
@@ -409,13 +449,17 @@ void runGronsfeld() {
     char inputText[4096];
     char* outputText = nullptr;
     int keyLen;
+    string inPath, outPath;
 
     while (!exitSub) {
-        cout << "\n1. Сгенерировать ключ" << endl;
-        cout << "2. Зашифровать текст" << endl;
-        cout << "3. Расшифровать текст" << endl;
-        cout << "4. Проверить ключ" << endl;
-        cout << "0. Назад" << endl;
+        cout << "\n--- МЕНЮ GRONSFELD ---\n";
+        cout << "1. Сгенерировать ключ\n";
+        cout << "2. Зашифровать текст\n";
+        cout << "3. Расшифровать текст\n";
+        cout << "4. Зашифровать файл\n";
+        cout << "5. Расшифровать файл\n";
+        cout << "6. Проверить ключ\n";
+        cout << "0. Назад\n";
         cout << "Выбор: ";
 
         cin >> ch;
@@ -423,45 +467,76 @@ void runGronsfeld() {
 
         if (ch == 0) break;
 
-        if (ch == 1) {
-            cout << "Введите длину ключа: ";
-            cin >> keyLen;
-            clearInput();
-            if (loader.generateKey(key, sizeof(key), keyLen) > 0) {
-                cout << "Сгенерированный ключ: " << key << endl;
-            } else {
-                cout << "Ошибка генерации ключа" << endl;
+        switch (ch) {
+            case 1:
+                cout << "Введите длину ключа: ";
+                cin >> keyLen;
+                clearInput();
+                if (loader.generateKey(key, sizeof(key), keyLen) > 0) {
+                    cout << "Сгенерированный ключ: " << key << endl;
+                } else {
+                    cout << "Ошибка генерации ключа" << endl;
+                }
+                break;
+
+            case 2:
+            case 3: {
+                bool encrypt = (ch == 2);
+                cout << "Введите текст: ";
+                cin.getline(inputText, sizeof(inputText));
+                cout << "Введите ключ (цифры): ";
+                cin.getline(key, sizeof(key));
+                if (!loader.validateKey(key)) {
+                    cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
+                    continue;
+                }
+                int res;
+                if (encrypt) {
+                    res = loader.encrypt(inputText, (int)strlen(inputText), key, &outputText);
+                    cout << "Зашифрованный текст: ";
+                } else {
+                    res = loader.decrypt(inputText, (int)strlen(inputText), key, &outputText);
+                    cout << "Расшифрованный текст: ";
+                }
+                if (res > 0 && outputText) {
+                    cout << outputText << endl;
+                    loader.freeMemory(outputText);
+                    outputText = nullptr;
+                } else {
+                    cout << "Ошибка обработки" << endl;
+                }
+                break;
             }
-        }
-        else if (ch == 2 || ch == 3) {
-            cout << "Введите текст: ";
-            cin.getline(inputText, sizeof(inputText));
-            cout << "Введите ключ (цифры): ";
-            cin.getline(key, sizeof(key));
-            if (!loader.validateKey(key)) {
-                cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
-                continue;
+
+            case 4:
+            case 5: {
+                bool encrypt = (ch == 4);
+                cout << "Входной файл: ";
+                getline(cin, inPath);
+                cout << "Выходной файл: ";
+                getline(cin, outPath);
+                cout << "Введите ключ (цифры): ";
+                cin.getline(key, sizeof(key));
+                if (!loader.validateKey(key)) {
+                    cout << "ОШИБКА: Неверный ключ. Ключ должен состоять только из цифр." << endl;
+                    continue;
+                }
+                if (processFileGronsfeld(loader, inPath, outPath, key, encrypt)) {
+                    cout << "Операция выполнена успешно. Результат: " << outPath << endl;
+                } else {
+                    cout << "Ошибка при обработке файла." << endl;
+                }
+                break;
             }
-            int res;
-            if (ch == 2) {
-                res = loader.encrypt(inputText, (int)strlen(inputText), key, &outputText);
-                cout << "Зашифрованный текст: ";
-            } else {
-                res = loader.decrypt(inputText, (int)strlen(inputText), key, &outputText);
-                cout << "Расшифрованный текст: ";
-            }
-            if (res > 0 && outputText) {
-                cout << outputText << endl;
-                loader.freeMemory(outputText);
-                outputText = nullptr;
-            } else {
-                cout << "Ошибка обработки" << endl;
-            }
-        }
-        else if (ch == 4) {
-            cout << "Введите ключ: ";
-            cin.getline(key, sizeof(key));
-            cout << (loader.validateKey(key) ? "Ключ корректен" : "Ключ НЕ корректен") << endl;
+
+            case 6:
+                cout << "Введите ключ: ";
+                cin.getline(key, sizeof(key));
+                cout << (loader.validateKey(key) ? "Ключ корректен" : "Ключ НЕ корректен") << endl;
+                break;
+
+            default:
+                cout << "Неверный выбор." << endl;
         }
     }
     loader.unload();
@@ -510,10 +585,11 @@ void runGrandChiffre() {
     char hex[3];
 
     while (!exitSub) {
-        cout << "\n1. Сгенерировать случайный ключ" << endl;
-        cout << "2. Зашифровать/расшифровать текст" << endl;
-        cout << "3. Зашифровать/расшифровать файл" << endl;
-        cout << "0. Назад" << endl;
+        cout << "\n--- МЕНЮ GRANDCHIFFRE ---\n";
+        cout << "1. Сгенерировать случайный ключ\n";
+        cout << "2. Зашифровать/расшифровать текст\n";
+        cout << "3. Зашифровать/расшифровать файл\n";
+        cout << "0. Назад\n";
         cout << "Выбор: ";
 
         cin >> ch;
