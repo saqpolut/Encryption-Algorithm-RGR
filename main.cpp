@@ -129,7 +129,6 @@ void handleFileMode(int pluginIdx, bool isEncrypt) {
     cout << "Операция завершена. Результат: " << outPath << endl;
 }
 
-// Перечисление для меню Виженер/Скитала
 enum VigenereMenuAction {
     VIGENERE_EXIT = 0,
     VIGENERE_ENCRYPT_TEXT = 1,
@@ -277,7 +276,6 @@ bool processFileXorTea(const string& inPath, const string& outPath, const string
     return true;
 }
 
-// Перечисление для меню XOR/TEA
 enum XorTeaMenuAction {
     XOR_TEA_BACK = 0,
     XOR_TEA_SELECT_ALGO = 1,
@@ -443,7 +441,6 @@ bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, con
     return true;
 }
 
-// Перечисление для меню Gronsfeld
 enum GronsfeldMenuAction {
     GRONSFELD_BACK = 0,
     GRONSFELD_GEN_KEY = 1,
@@ -574,7 +571,6 @@ void runGronsfeld() {
 }
 
 // ========== Подсистема 5: GrandChiffre ==========
-// Перечисление для меню GrandChiffre
 enum GrandChiffreMenuAction {
     GRANDCHIFFRE_BACK = 0,
     GRANDCHIFFRE_GEN_KEY = 1,
@@ -637,7 +633,7 @@ void runGrandChiffre() {
         if (ch == GRANDCHIFFRE_BACK) break;
 
         switch (ch) {
-            case GRANDCHIFFRE_GEN_KEY:
+            case GRANDCHIFFRE_GEN_KEY: {
                 cout << "Введите длину ключа (" << alg->getMinKeyLength() << "-" << alg->getMaxKeyLength() << "): ";
                 cin >> keySize;
                 clearInput();
@@ -649,17 +645,22 @@ void runGrandChiffre() {
                 }
                 cout << endl;
                 break;
-
-            case GRANDCHIFFRE_TEXT:
+            }
+            case GRANDCHIFFRE_TEXT: {
                 cout << "Режим (1 - шифрование, 2 - дешифрование): ";
                 cin >> mode;
                 clearInput();
 
-                cout << "Введите текст: ";
+                if (mode == 2) {
+                    cout << "Введите шифротекст в HEX (например: 19 56 59 B2): ";
+                } else {
+                    cout << "Введите текст: ";
+                }
                 getline(cin, inputText);
                 cout << "Введите ключ в HEX (например, 01 02 03): ";
                 getline(cin, hexKey);
 
+                // Парсинг ключа
                 keyBytes.clear();
                 for (i = 0; i < hexKey.length(); ) {
                     if (hexKey[i] == ' ') { ++i; continue; }
@@ -671,7 +672,23 @@ void runGrandChiffre() {
                     i += 2;
                 }
 
-                data.assign(inputText.begin(), inputText.end());
+                // Парсинг данных
+                data.clear();
+                if (mode == 2) {
+                    // Режим дешифрования — парсим HEX
+                    for (i = 0; i < inputText.length(); ) {
+                        if (inputText[i] == ' ') { ++i; continue; }
+                        if (i + 1 >= inputText.length()) break;
+                        hex[0] = inputText[i];
+                        hex[1] = inputText[i+1];
+                        hex[2] = '\0';
+                        data.push_back((unsigned char)strtoul(hex, nullptr, 16));
+                        i += 2;
+                    }
+                } else {
+                    // Режим шифрования — обычный текст
+                    data.assign(inputText.begin(), inputText.end());
+                }
 
                 try {
                     alg->process(keyBytes, data);
@@ -680,12 +697,22 @@ void runGrandChiffre() {
                         printf("%02X ", data[i]);
                     }
                     cout << endl;
+                    if (mode == 1) {
+                        cout << "Результат (текст): ";
+                        string resultText(data.begin(), data.end());
+                        cout << resultText << endl;
+                    } else {
+                        cout << "Результат (текст): ";
+                        string resultText(data.begin(), data.end());
+                        cout << resultText << endl;
+                    }
                 } catch (const exception& e) {
                     cout << "Ошибка: " << e.what() << endl;
                 }
                 break;
-
-            case GRANDCHIFFRE_FILE:
+            }
+            
+            case GRANDCHIFFRE_FILE: {
                 cout << "Режим (1 - шифрование, 2 - дешифрование): ";
                 cin >> mode;
                 clearInput();
@@ -730,7 +757,7 @@ void runGrandChiffre() {
                 fclose(outFile);
                 cout << "Операция выполнена успешно. Результат: " << outPath << endl;
                 break;
-
+            }
             default:
                 cout << "Неверный выбор." << endl;
         }

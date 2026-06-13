@@ -1,38 +1,59 @@
-
 # Объектные файлы
 *.o
 *.so
+*.a
+*.lib
 
 # Исполняемые файлы
+cipher_prog
+ram
+encrypt
 cipher_program
 rgr_app
+utils.o
+libvigeneres.o
+libskitala.so
+libvigenere.so
+
+# Временные файлы
+*.odt
+*.lock
+#*#
+*~
+*.swp
+*.bak
 
 # Тестовые файлы
 dec.txt
 dec1.txt
+enc.bin
 dec.bin
 dec1.bin
-enc.bin
 test.txt
 test1.txt
+*.txt
+*.bin
 
 # Плагины
 libenigma_plugin.so
 libra_plugin.so
 librsa_plugin.so
 
-# Исходники
-main_rsa_enigma.cpp
-
 # Ключи
 *.key
 
-# Директории
+# Исходники (если не нужно в репозитории)
+main_rsa_enigma.cpp
+
+# Папки сборки
 build/
+bin/
+obj/
 
 # IDE
 .vscode/
 .idea/
-*.swp
 
-admin123
+# Системные файлы
+.DS_Store
+Thumbs.db

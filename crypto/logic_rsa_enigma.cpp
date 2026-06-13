@@ -8,13 +8,6 @@
 #include <cstring>
 #include <sstream>
 
-enum MenuAction {
-    ACTION_EXIT = 0,
-    ACTION_KEY_GENERATION = 1,
-    ACTION_TEXT_PROCESSING = 2,
-    ACTION_FILE_PROCESSING = 3
-};
-
 static void handle_key_generation(Plugin& rsa, Plugin& enigma) {
     std::cout << "\nДоступные алгоритмы:\n";
     std::cout << "1. " << rsa.get_name() << " (Ключ: " << rsa.get_format() << ")\n";

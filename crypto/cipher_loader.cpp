@@ -26,8 +26,8 @@ static LoadedPlugin plugins[MAX_PLUGINS];
 static int pluginsLoaded = 0;
 
 static const char* pluginPaths[] = {
-    "./vigenere_plugin.dll",
-    "./skitala_plugin.dll"
+    "./libvigener.so",
+    "./libskitala.so"
 };
 
 template<typename T>
