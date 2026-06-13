@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cstddef>
 
 // Макросы для экспорта/импорта в динамических библиотеках
 #ifdef _WIN32

@@ -2,6 +2,7 @@
 #define GRANDCHIFFREALGORITHM_H
 
 #include "ICryptoAlgorithm_chiffre.h"
+#include <cstddef>
 
 class GrandChiffreAlgorithm : public ICryptoAlgorithm {
 public:

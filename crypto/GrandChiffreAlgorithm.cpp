@@ -55,7 +55,7 @@ vector<uint8_t> GrandChiffreAlgorithm::generateKey(size_t length) {
     return key;
 }
 
-//ЭКСПОРТИРУЕМЫЕ ФУНКЦИИ
+// ЭКСПОРТИРУЕМЫЕ ФУНКЦИИ
 extern "C" {
 
 GRANDCHIFFRE_API ICryptoAlgorithm* create_algorithm() {
