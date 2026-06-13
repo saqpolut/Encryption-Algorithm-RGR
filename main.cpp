@@ -63,6 +63,11 @@ void handleTextMode(int pluginIdx, bool isEncrypt) {
         plugin->decrypt_text(input, output, key);
 
     cout << "Результат: " << output << endl;
+    cout << "Результат (HEX): ";
+    for (int i = 0; output[i] != '\0'; ++i) {
+        printf("%02X ", (unsigned char)output[i]);
+    }
+    cout << endl;
 }
 
 void handleFileMode(int pluginIdx, bool isEncrypt) {
@@ -124,6 +129,14 @@ void handleFileMode(int pluginIdx, bool isEncrypt) {
     cout << "Операция завершена. Результат: " << outPath << endl;
 }
 
+enum VigenereMenuAction {
+    VIGENERE_EXIT = 0,
+    VIGENERE_ENCRYPT_TEXT = 1,
+    VIGENERE_DECRYPT_TEXT = 2,
+    VIGENERE_ENCRYPT_FILE = 3,
+    VIGENERE_DECRYPT_FILE = 4
+};
+
 void runVigenereSkitala() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: ВИЖЕНЕР + СКИТАЛА\n";
@@ -137,7 +150,8 @@ void runVigenereSkitala() {
         return;
     }
 
-    int choice, pluginIdx, isEncrypt, isFile;
+    int choice, pluginIdx;
+    bool isEncrypt, isFile;
 
     while (true) {
         cout << "\n--- МЕНЮ ВИЖЕНЕР/СКИТАЛА ---" << endl;
@@ -151,15 +165,15 @@ void runVigenereSkitala() {
         cin >> choice;
         clearInput();
 
-        if (choice == 0) break;
+        if (choice == VIGENERE_EXIT) break;
 
-        if (choice < 1 || choice > 4) {
+        if (choice < VIGENERE_ENCRYPT_TEXT || choice > VIGENERE_DECRYPT_FILE) {
             cout << "Неверный выбор!" << endl;
             continue;
         }
 
-        isFile = (choice == 3 || choice == 4);
-        isEncrypt = (choice == 1 || choice == 3);
+        isFile = (choice == VIGENERE_ENCRYPT_FILE || choice == VIGENERE_DECRYPT_FILE);
+        isEncrypt = (choice == VIGENERE_ENCRYPT_TEXT || choice == VIGENERE_ENCRYPT_FILE);
 
         cout << "\nВыберите алгоритм (1-" << getPluginsCount() << "): ";
         cin >> pluginIdx;
@@ -190,7 +204,7 @@ void runRSAEnigma() {
     run_application();
 }
 
-// ========== Подсистема 3: XOR + TEA (расширенная) ==========
+// ========== Подсистема 3: XOR + TEA ==========
 vector<uint32_t> bytesToUint32(const vector<uint8_t>& bytes, size_t blockSize) {
     vector<uint32_t> result;
     size_t numBlocks = (bytes.size() + blockSize - 1) / blockSize;
@@ -262,6 +276,16 @@ bool processFileXorTea(const string& inPath, const string& outPath, const string
     return true;
 }
 
+enum XorTeaMenuAction {
+    XOR_TEA_BACK = 0,
+    XOR_TEA_SELECT_ALGO = 1,
+    XOR_TEA_SHOW_ALGO = 2,
+    XOR_TEA_GEN_KEY = 3,
+    XOR_TEA_TEXT = 4,
+    XOR_TEA_FILE = 5,
+    XOR_TEA_ARRAY = 6
+};
+
 void runXorTea() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: XOR + TEA\n";
@@ -290,23 +314,23 @@ void runXorTea() {
         cin >> ch;
         clearInput();
         
-        if (ch == 0) break;
+        if (ch == XOR_TEA_BACK) break;
         
         switch (ch) {
-            case 1:
+            case XOR_TEA_SELECT_ALGO:
                 cout << "Введите алгоритм (XOR или TEA): ";
                 cin.getline(algo, 10);
                 load_plugin(algo);
                 cout << "Текущий алгоритм: " << get_plugin_name() << endl;
                 break;
-            case 2:
+            case XOR_TEA_SHOW_ALGO:
                 cout << "Текущий алгоритм: " << get_plugin_name() << endl;
                 break;
-            case 3:
+            case XOR_TEA_GEN_KEY:
                 generate_key(key, sizeof(key));
                 cout << "Сгенерированный ключ: " << key << endl;
                 break;
-            case 4: {
+            case XOR_TEA_TEXT: {
                 cout << "\n1. Шифрование текста\n2. Дешифрование текста\nВыбор: ";
                 cin >> subCh;
                 clearInput();
@@ -332,7 +356,7 @@ void runXorTea() {
                 }
                 break;
             }
-            case 5: {
+            case XOR_TEA_FILE: {
                 cout << "\n1. Шифрование файла\n2. Дешифрование файла\nВыбор: ";
                 cin >> subCh;
                 clearInput();
@@ -354,7 +378,7 @@ void runXorTea() {
                 }
                 break;
             }
-            case 6: {
+            case XOR_TEA_ARRAY: {
                 cout << "Длина массива: ";
                 cin >> len;
                 clearInput();
@@ -381,10 +405,8 @@ void runXorTea() {
     }
 }
 
-// ========== Подсистема 4: Gronsfeld (с поддержкой файлов) ==========
-// Вспомогательная функция для обработки файла Gronsfeld
+// ========== Подсистема 4: Gronsfeld ==========
 bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, const string& outPath, const string& key, bool encrypt) {
-    // Читаем весь файл как текст (UTF-8)
     ifstream inFile(inPath, ios::binary);
     if (!inFile) {
         cerr << "Ошибка: не удалось открыть входной файл " << inPath << endl;
@@ -392,12 +414,10 @@ bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, con
     }
     string content((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
     inFile.close();
-
     if (content.empty()) {
         cerr << "Входной файл пуст" << endl;
         return false;
     }
-
     char* outputText = nullptr;
     int result;
     if (encrypt) {
@@ -405,12 +425,10 @@ bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, con
     } else {
         result = loader.decrypt(content.c_str(), (int)content.size(), key.c_str(), &outputText);
     }
-
     if (result < 0 || !outputText) {
         cerr << "Ошибка обработки данных" << endl;
         return false;
     }
-
     ofstream outFile(outPath, ios::binary);
     if (!outFile) {
         cerr << "Ошибка: не удалось создать выходной файл " << outPath << endl;
@@ -422,6 +440,16 @@ bool processFileGronsfeld(CryptoLibraryLoader& loader, const string& inPath, con
     loader.freeMemory(outputText);
     return true;
 }
+
+enum GronsfeldMenuAction {
+    GRONSFELD_BACK = 0,
+    GRONSFELD_GEN_KEY = 1,
+    GRONSFELD_ENCRYPT_TEXT = 2,
+    GRONSFELD_DECRYPT_TEXT = 3,
+    GRONSFELD_ENCRYPT_FILE = 4,
+    GRONSFELD_DECRYPT_FILE = 5,
+    GRONSFELD_VALIDATE_KEY = 6
+};
 
 void runGronsfeld() {
     cout << "\n========================================\n";
@@ -465,10 +493,10 @@ void runGronsfeld() {
         cin >> ch;
         clearInput();
 
-        if (ch == 0) break;
+        if (ch == GRONSFELD_BACK) break;
 
         switch (ch) {
-            case 1:
+            case GRONSFELD_GEN_KEY:
                 cout << "Введите длину ключа: ";
                 cin >> keyLen;
                 clearInput();
@@ -479,9 +507,9 @@ void runGronsfeld() {
                 }
                 break;
 
-            case 2:
-            case 3: {
-                bool encrypt = (ch == 2);
+            case GRONSFELD_ENCRYPT_TEXT:
+            case GRONSFELD_DECRYPT_TEXT: {
+                bool encrypt = (ch == GRONSFELD_ENCRYPT_TEXT);
                 cout << "Введите текст: ";
                 cin.getline(inputText, sizeof(inputText));
                 cout << "Введите ключ (цифры): ";
@@ -508,9 +536,9 @@ void runGronsfeld() {
                 break;
             }
 
-            case 4:
-            case 5: {
-                bool encrypt = (ch == 4);
+            case GRONSFELD_ENCRYPT_FILE:
+            case GRONSFELD_DECRYPT_FILE: {
+                bool encrypt = (ch == GRONSFELD_ENCRYPT_FILE);
                 cout << "Входной файл: ";
                 getline(cin, inPath);
                 cout << "Выходной файл: ";
@@ -529,7 +557,7 @@ void runGronsfeld() {
                 break;
             }
 
-            case 6:
+            case GRONSFELD_VALIDATE_KEY:
                 cout << "Введите ключ: ";
                 cin.getline(key, sizeof(key));
                 cout << (loader.validateKey(key) ? "Ключ корректен" : "Ключ НЕ корректен") << endl;
@@ -543,6 +571,13 @@ void runGronsfeld() {
 }
 
 // ========== Подсистема 5: GrandChiffre ==========
+enum GrandChiffreMenuAction {
+    GRANDCHIFFRE_BACK = 0,
+    GRANDCHIFFRE_GEN_KEY = 1,
+    GRANDCHIFFRE_TEXT = 2,
+    GRANDCHIFFRE_FILE = 3
+};
+
 void runGrandChiffre() {
     cout << "\n========================================\n";
     cout << "    ПОДСИСТЕМА: GRANDCHIFFRE\n";
@@ -595,99 +630,109 @@ void runGrandChiffre() {
         cin >> ch;
         clearInput();
 
-        if (ch == 0) break;
+        if (ch == GRANDCHIFFRE_BACK) break;
 
-        if (ch == 1) {
-            cout << "Введите длину ключа (" << alg->getMinKeyLength() << "-" << alg->getMaxKeyLength() << "): ";
-            cin >> keySize;
-            clearInput();
+        switch (ch) {
+            case GRANDCHIFFRE_GEN_KEY: {
+                cout << "Введите длину ключа (" << alg->getMinKeyLength() << "-" << alg->getMaxKeyLength() << "): ";
+                cin >> keySize;
+                clearInput();
 
-            vector<unsigned char> newKey = alg->generateKey(keySize);
-            cout << "Сгенерированный ключ (HEX): ";
-            for (i = 0; i < newKey.size(); ++i) {
-                printf("%02X ", newKey[i]);
-            }
-            cout << endl;
-        }
-        else if (ch == 2) {
-            cout << "Режим (1 - шифрование, 2 - дешифрование): ";
-            cin >> mode;
-            clearInput();
-
-            cout << "Введите текст: ";
-            getline(cin, inputText);
-
-            cout << "Введите ключ в HEX (например, 01 02 03): ";
-            getline(cin, hexKey);
-
-            keyBytes.clear();
-            for (i = 0; i < hexKey.length(); ) {
-                if (hexKey[i] == ' ') { ++i; continue; }
-                if (i + 1 >= hexKey.length()) break;
-                hex[0] = hexKey[i];
-                hex[1] = hexKey[i+1];
-                hex[2] = '\0';
-                keyBytes.push_back((unsigned char)strtoul(hex, nullptr, 16));
-                i += 2;
-            }
-
-            data.assign(inputText.begin(), inputText.end());
-
-            try {
-                alg->process(keyBytes, data);
-                cout << "Результат (HEX): ";
-                for (i = 0; i < data.size(); ++i) {
-                    printf("%02X ", data[i]);
+                vector<unsigned char> newKey = alg->generateKey(keySize);
+                cout << "Сгенерированный ключ (HEX): ";
+                for (i = 0; i < newKey.size(); ++i) {
+                    printf("%02X ", newKey[i]);
                 }
                 cout << endl;
-            } catch (const exception& e) {
-                cout << "Ошибка: " << e.what() << endl;
+                break;
             }
-        }
-        else if (ch == 3) {
-            cout << "Режим (1 - шифрование, 2 - дешифрование): ";
-            cin >> mode;
-            clearInput();
+            case GRANDCHIFFRE_TEXT: {
+                cout << "Режим (1 - шифрование, 2 - дешифрование): ";
+                cin >> mode;
+                clearInput();
 
-            cout << "Входной файл: ";
-            getline(cin, inPath);
-            cout << "Выходной файл: ";
-            getline(cin, outPath);
-            cout << "Введите ключ в HEX: ";
-            getline(cin, hexKey);
+                cout << "Введите текст: ";
+                getline(cin, inputText);
+                cout << "Введите ключ в HEX (например, 01 02 03): ";
+                getline(cin, hexKey);
 
-            keyBytes.clear();
-            for (i = 0; i < hexKey.length(); ) {
-                if (hexKey[i] == ' ') { ++i; continue; }
-                if (i + 1 >= hexKey.length()) break;
-                hex[0] = hexKey[i];
-                hex[1] = hexKey[i+1];
-                hex[2] = '\0';
-                keyBytes.push_back((unsigned char)strtoul(hex, nullptr, 16));
-                i += 2;
+                keyBytes.clear();
+                for (i = 0; i < hexKey.length(); ) {
+                    if (hexKey[i] == ' ') { ++i; continue; }
+                    if (i + 1 >= hexKey.length()) break;
+                    hex[0] = hexKey[i];
+                    hex[1] = hexKey[i+1];
+                    hex[2] = '\0';
+                    keyBytes.push_back((unsigned char)strtoul(hex, nullptr, 16));
+                    i += 2;
+                }
+
+                data.assign(inputText.begin(), inputText.end());
+
+                try {
+                    alg->process(keyBytes, data);
+                    cout << "Результат (HEX): ";
+                    for (i = 0; i < data.size(); ++i) {
+                        printf("%02X ", data[i]);
+                    }
+                    cout << endl;
+                    // Дополнительный вывод как текст (может быть непечатаемым)
+                    cout << "Результат (текст): ";
+                    string resultText(data.begin(), data.end());
+                    cout << resultText << endl;
+                } catch (const exception& e) {
+                    cout << "Ошибка: " << e.what() << endl;
+                }
+                break;
             }
+            case GRANDCHIFFRE_FILE: {
+                cout << "Режим (1 - шифрование, 2 - дешифрование): ";
+                cin >> mode;
+                clearInput();
 
-            inFile = fopen(inPath.c_str(), "rb");
-            if (!inFile) {
-                cout << "Ошибка: не удалось открыть файл " << inPath << endl;
-                continue;
-            }
-            outFile = fopen(outPath.c_str(), "wb");
-            if (!outFile) {
-                cout << "Ошибка: не удалось создать файл " << outPath << endl;
+                cout << "Входной файл: ";
+                getline(cin, inPath);
+                cout << "Выходной файл: ";
+                getline(cin, outPath);
+                cout << "Введите ключ в HEX: ";
+                getline(cin, hexKey);
+
+                keyBytes.clear();
+                for (i = 0; i < hexKey.length(); ) {
+                    if (hexKey[i] == ' ') { ++i; continue; }
+                    if (i + 1 >= hexKey.length()) break;
+                    hex[0] = hexKey[i];
+                    hex[1] = hexKey[i+1];
+                    hex[2] = '\0';
+                    keyBytes.push_back((unsigned char)strtoul(hex, nullptr, 16));
+                    i += 2;
+                }
+
+                inFile = fopen(inPath.c_str(), "rb");
+                if (!inFile) {
+                    cout << "Ошибка: не удалось открыть файл " << inPath << endl;
+                    continue;
+                }
+                outFile = fopen(outPath.c_str(), "wb");
+                if (!outFile) {
+                    cout << "Ошибка: не удалось создать файл " << outPath << endl;
+                    fclose(inFile);
+                    continue;
+                }
+
+                fileBuffer.resize(65536);
+                while ((bytesRead = fread(fileBuffer.data(), 1, 65536, inFile)) > 0) {
+                    vector<unsigned char> chunk(fileBuffer.begin(), fileBuffer.begin() + bytesRead);
+                    alg->process(keyBytes, chunk);
+                    fwrite(chunk.data(), 1, chunk.size(), outFile);
+                }
                 fclose(inFile);
-                continue;
+                fclose(outFile);
+                cout << "Операция выполнена успешно. Результат: " << outPath << endl;
+                break;
             }
-
-            fileBuffer.resize(65536);
-            while ((bytesRead = fread(fileBuffer.data(), 1, 65536, inFile)) > 0) {
-                vector<unsigned char> chunk(fileBuffer.begin(), fileBuffer.begin() + bytesRead);
-                alg->process(keyBytes, chunk);
-                fwrite(chunk.data(), 1, chunk.size(), outFile);
-            }
-            fclose(inFile);
-            fclose(outFile);
-            cout << "Операция выполнена успешно. Результат: " << outPath << endl;
+            default:
+                cout << "Неверный выбор." << endl;
         }
     }
     unload_plugin();
@@ -695,12 +740,12 @@ void runGrandChiffre() {
 
 // ========== ГЛАВНОЕ МЕНЮ ==========
 enum MainMenuAction {
-    MENU_EXIT = 0,
-    MENU_VIGENERE_SKITALA = 1,
-    MENU_RSA_ENIGMA = 2,
-    MENU_XOR_TEA = 3,
-    MENU_GRONSFELD = 4,
-    MENU_GRANDCHIFFRE = 5
+    MAIN_EXIT = 0,
+    MAIN_VIGENERE_SKITALA = 1,
+    MAIN_RSA_ENIGMA = 2,
+    MAIN_XOR_TEA = 3,
+    MAIN_GRONSFELD = 4,
+    MAIN_GRANDCHIFFRE = 5
 };
 
 int main() {
@@ -734,12 +779,12 @@ int main() {
         clearInput();
 
         switch (choice) {
-            case MENU_VIGENERE_SKITALA: runVigenereSkitala(); break;
-            case MENU_RSA_ENIGMA:       runRSAEnigma();       break;
-            case MENU_XOR_TEA:          runXorTea();          break;
-            case MENU_GRONSFELD:        runGronsfeld();       break;
-            case MENU_GRANDCHIFFRE:     runGrandChiffre();    break;
-            case MENU_EXIT:
+            case MAIN_VIGENERE_SKITALA: runVigenereSkitala(); break;
+            case MAIN_RSA_ENIGMA:       runRSAEnigma();       break;
+            case MAIN_XOR_TEA:          runXorTea();          break;
+            case MAIN_GRONSFELD:        runGronsfeld();       break;
+            case MAIN_GRANDCHIFFRE:     runGrandChiffre();    break;
+            case MAIN_EXIT:
                 running = false;
                 cout << "\nДо свидания!" << endl;
                 break;
